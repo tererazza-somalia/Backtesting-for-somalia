@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --color-tv-bg: #131722;
+  --color-tv-surface: #1e222d;
+  --color-tv-surface-hover: #262b3d;
+  --color-tv-border: #2a2e39;
+  --color-tv-text: #d1d4dc;
+  --color-tv-text-muted: #787b86;
+  --color-tv-accent: #2962ff;
+  --color-tv-accent-hover: #1e53e5;
+  --color-tv-profit: #26a69a;
+  --color-tv-loss: #ef5350;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #131722;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2e39;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3e49;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23787b86' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 32px !important;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ── REMOVE TRADINGVIEW LOGO / ATTRIBUTION ── */
+#tv-attr-logo,
+a[href*="tradingview.com"],
+div[id*="tv-attr"],
+div[class*="tv-logo"],
+div[class*="attribution"],
+.tv-circle-logo {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}

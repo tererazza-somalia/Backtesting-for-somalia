@@ -1,0 +1,5013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradingView Alternative - Chart, Measure, S/R & Bar Replay</title>
+  <!-- TradingView's official open-source canvas library (Local + jsDelivr + unpkg) -->
+  <script src="lightweight-charts.standalone.production.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <link rel="stylesheet" href="drawings/ui/drawing.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background-color: #131722;
+      color: #d1d4dc;
+      font-family: -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    /* ── TradingView Exact Official Navigation Bar ── */
+    #toolbar {
+      height: 44px;
+      background: #ffffff;
+      border-bottom: 1px solid #e0e3eb;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 2px;
+      z-index: 100;
+      flex-wrap: nowrap;
+      user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif;
+      color: #131722;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .tv-nav-left, .tv-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .tv-nav-spacer {
+      flex: 1;
+      min-width: 10px;
+    }
+    .tv-avatar-wrap {
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      margin-right: 6px;
+    }
+    .tv-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #089981;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: -0.5px;
+    }
+    .tv-badge {
+      position: absolute;
+      top: -3px;
+      right: -6px;
+      background: #f23645;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 8px;
+      border: 1.5px solid #ffffff;
+      line-height: 1.1;
+      min-width: 14px;
+      text-align: center;
+    }
+    .tv-symbol-pill {
+      background: #f0f3fa;
+      color: #131722;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .tv-symbol-pill:hover {
+      background: #e0e3eb;
+    }
+    .tv-divider {
+      width: 1px;
+      height: 18px;
+      background: #e0e3eb;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    .tv-btn, .tv-icon-btn {
+      background: transparent;
+      color: #131722;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: background 0.12s, color 0.12s;
+      line-height: 1;
+      outline: none;
+    }
+    .tv-btn:hover, .tv-icon-btn:hover {
+      background: #f0f3fa;
+      color: #131722;
+    }
+    .tv-icon-btn {
+      padding: 5px;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+    }
+    .tv-timeframe-btn {
+      font-weight: 700;
+      min-width: 28px;
+      justify-content: center;
+    }
+    .tv-chevron {
+      color: #787b86;
+      margin-left: 1px;
+    }
+    .tv-replay-btn.active {
+      background: #2962ff !important;
+      color: #ffffff !important;
+      font-weight: 600;
+      box-shadow: 0 0 10px rgba(41, 98, 255, 0.4);
+    }
+    .tv-pill-btn {
+      border-radius: 16px;
+      padding: 5px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      line-height: 1.2;
+      outline: none;
+    }
+    .tv-trade-btn {
+      background: #ffffff;
+      color: #131722;
+      border: 1px solid #d1d4dc;
+      margin-left: 4px;
+    }
+    .tv-trade-btn:hover {
+      background: #f0f3fa;
+      border-color: #b2b5be;
+    }
+    .tv-upgrade-btn {
+      background: #131722;
+      color: #ffffff;
+      border: 1px solid #131722;
+      margin-left: 4px;
+    }
+    .tv-upgrade-btn:hover {
+      background: #2a2e39;
+      border-color: #2a2e39;
+    }
+
+    /* Dropdown Menus */
+    .tv-dropdown-anchor {
+      position: relative;
+      display: inline-flex;
+    }
+    .tv-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 6px;
+      background: #ffffff;
+      border: 1px solid #e0e3eb;
+      border-radius: 8px;
+      padding: 6px 0;
+      min-width: 220px;
+      z-index: 1000;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      animation: tvMenuDrop 0.12s ease-out;
+    }
+    .tv-dropdown-sm {
+      min-width: 140px;
+    }
+    .tv-dropdown-right {
+      left: auto;
+      right: 0;
+    }
+    @keyframes tvMenuDrop {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .tv-menu-header {
+      padding: 6px 14px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #787b86;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .tv-menu-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 7px 14px;
+      font-size: 13px;
+      color: #131722;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .tv-menu-item:hover {
+      background: #f0f3fa;
+    }
+    .tv-menu-item.active {
+      color: #2962ff;
+      font-weight: 600;
+      background: rgba(41, 98, 255, 0.08);
+    }
+    .tv-menu-symbol {
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .tv-menu-desc {
+      font-size: 11px;
+      color: #787b86;
+    }
+    .tv-menu-divider {
+      height: 1px;
+      background: #e0e3eb;
+      margin: 4px 0;
+    }
+
+    /* App Main Layout */
+    #main-layout {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 44px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Left Drawing Toolbar (TradingView Exact Replica) */
+    .tv-left-toolbar {
+      width: 48px;
+      height: 100%;
+      background: #ffffff;
+      border-right: 1px solid #e0e3eb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+      gap: 6px;
+      z-index: 70;
+      user-select: none;
+      flex-shrink: 0;
+      box-shadow: 1px 0 3px rgba(0, 0, 0, 0.03);
+    }
+    .tv-tool-group {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tv-left-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+      border: none;
+      background: transparent;
+      color: #131722;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: background 0.12s, color 0.12s;
+      outline: none;
+    }
+    .tv-left-btn:hover {
+      background: #f0f3fa;
+      color: #131722;
+    }
+    .tv-left-btn.active {
+      background: rgba(41, 98, 255, 0.12) !important;
+      color: #2962ff !important;
+    }
+    .tv-sub-arrow {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      cursor: pointer;
+      z-index: 10;
+      box-sizing: border-box;
+      padding: 0 2px 2px 0;
+    }
+    .tv-sub-arrow::after {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 3.5px solid transparent;
+      border-right: 3.5px solid transparent;
+      border-top: 4.5px solid #787b86;
+      transform: rotate(-45deg);
+      pointer-events: none;
+      display: block;
+    }
+    .tv-sub-arrow:hover::after,
+    .tv-left-btn:hover .tv-sub-arrow::after {
+      border-top-color: #2962ff;
+    }
+    .tv-left-sep {
+      width: 24px;
+      height: 1px;
+      background: #e0e3eb;
+      margin: 2px 0;
+      flex-shrink: 0;
+    }
+
+    /* Lines & Channels Flyout Dropdown Menu (Exact Replica of TradingView) */
+    .tv-flyout-menu {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 48px;
+      background: #ffffff;
+      border: 1px solid #e0e3eb;
+      border-radius: 6px;
+      width: 236px;
+      z-index: 1000;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      padding: 6px 0;
+      font-size: 13px;
+      color: #131722;
+      animation: tvMenuDrop 0.12s ease-out;
+    }
+    .tv-flyout-header {
+      padding: 6px 14px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #787b86;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .tv-flyout-item {
+      display: flex;
+      align-items: center;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: background 0.1s;
+      gap: 10px;
+    }
+    .tv-flyout-item:hover {
+      background: #f0f3fa;
+    }
+    .tv-flyout-item.active {
+      background: rgba(41, 98, 255, 0.08);
+      color: #2962ff;
+      font-weight: 600;
+    }
+    .tv-flyout-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: #131722;
+    }
+    .tv-flyout-item.active .tv-flyout-icon {
+      color: #2962ff;
+    }
+    .tv-flyout-label {
+      flex: 1;
+      font-size: 13px;
+    }
+    .tv-flyout-shortcut {
+      font-size: 11px;
+      color: #787b86;
+    }
+    .tv-flyout-divider {
+      height: 1px;
+      background: #e0e3eb;
+      margin: 4px 0;
+    }
+
+    /* Floating Trendline Formatting Toolbar */
+    .tv-floating-toolbar {
+      display: none;
+      position: absolute;
+      background: #1e222d;
+      border: 1px solid #363a45;
+      border-radius: 6px;
+      padding: 5px 8px;
+      gap: 8px;
+      align-items: center;
+      z-index: 60;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      user-select: none;
+      animation: tvMenuDrop 0.15s ease-out;
+    }
+    .tv-floating-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #9b9eb5;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 2px;
+    }
+    .tv-color-swatches {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .tv-color-dot {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.12s;
+    }
+    .tv-color-dot:hover {
+      transform: scale(1.25);
+    }
+    .tv-color-dot.active {
+      box-shadow: 0 0 0 2px #ffffff;
+    }
+    .tv-floating-btn {
+      background: #2a2e39;
+      color: #d1d4dc;
+      border: 1px solid #363a45;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.12s;
+    }
+    .tv-floating-btn:hover {
+      background: #363a45;
+      color: #ffffff;
+    }
+    .tv-floating-btn.active {
+      background: rgba(41, 98, 255, 0.2);
+      color: #2962ff;
+      border-color: #2962ff;
+    }
+    .tv-danger-btn {
+      color: #f23645;
+    }
+    .tv-danger-btn:hover {
+      background: rgba(242, 54, 69, 0.2);
+    }
+    .tv-floating-sep {
+      width: 1px;
+      height: 16px;
+      background: #363a45;
+    }
+
+    /* Main Chart Area */
+    #chart-wrapper {
+      position: relative;
+      flex: 1 1 auto;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 250px;
+      overflow: hidden;
+    }
+    #chart-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 250px;
+    }
+
+    /* Canvas Overlay (Trendlines & Drawings) */
+    #drawings-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    /* Canvas Overlay (Measure Tool & Line Placement & Cut Preview) */
+    #measure-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+    #measure-canvas.active-tool {
+      pointer-events: auto;
+      cursor: crosshair;
+    }
+
+    /* Measure Badge */
+    #measure-badge {
+      display: none;
+      position: absolute;
+      background: rgba(30, 34, 45, 0.95);
+      border: 1px solid #2962ff;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #ffffff;
+      pointer-events: none;
+      z-index: 6;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .pos { color: #089981; font-weight: bold; }
+    .neg { color: #f23645; font-weight: bold; }
+
+    /* Action Banner / Prompt when placing lines or cutting */
+    #action-banner {
+      display: none;
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(26, 30, 42, 0.96);
+      border: 1px solid #2962ff;
+      border-radius: 20px;
+      padding: 7px 18px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #ffffff;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    /* ── Floating Bar Replay Controller ── */
+    #replay-toolbar {
+      display: none;
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(24, 28, 39, 0.96);
+      border: 1px solid #363a45;
+      border-radius: 8px;
+      padding: 6px 14px;
+      z-index: 50;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+      animation: replaySlideUp 0.2s ease-out;
+    }
+    @keyframes replaySlideUp {
+      from { opacity: 0; transform: translate(-50%, 15px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .replay-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(242, 54, 69, 0.18);
+      color: #f23645;
+      border: 1px solid rgba(242, 54, 69, 0.35);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .replay-pulse {
+      width: 7px;
+      height: 7px;
+      background: #f23645;
+      border-radius: 50%;
+      animation: replayBlink 1.2s infinite;
+    }
+    @keyframes replayBlink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(0.75); }
+    }
+    .replay-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .replay-btn {
+      background: #2a2e39;
+      color: #d1d4dc;
+      border: 1px solid #363a45;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .replay-btn:hover {
+      background: #363a45;
+      color: #ffffff;
+      border-color: #4a4e5c;
+    }
+    .replay-play-btn {
+      background: #2962ff !important;
+      border-color: #2962ff !important;
+      color: #ffffff !important;
+      font-weight: bold;
+      min-width: 65px;
+    }
+    .replay-play-btn:hover {
+      background: #1e53e5 !important;
+    }
+    .replay-play-btn.playing {
+      background: #f7931a !important;
+      border-color: #f7931a !important;
+    }
+    .replay-step-btn {
+      font-weight: 600;
+      border-color: #363a45;
+    }
+    .replay-step-btn:hover {
+      border-color: #2962ff;
+      color: #2962ff;
+    }
+    .replay-exit-btn {
+      color: #9b9eb5;
+    }
+    .replay-exit-btn:hover {
+      color: #f23645;
+      border-color: rgba(242, 54, 69, 0.4);
+      background: rgba(242, 54, 69, 0.15);
+    }
+    .replay-sep {
+      width: 1px;
+      height: 20px;
+      background: #363a45;
+      flex-shrink: 0;
+    }
+    .replay-speed-select {
+      background: #2a2e39;
+      color: #d1d4dc;
+      border: 1px solid #363a45;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+    }
+    .replay-scrubber-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .replay-slider {
+      width: 120px;
+      accent-color: #2962ff;
+      cursor: pointer;
+    }
+    .replay-counter {
+      font-size: 11px;
+      color: #9b9eb5;
+      font-family: monospace;
+      white-space: nowrap;
+      min-width: 80px;
+    }
+
+    /* Support & Resistance Floating Manager Panel */
+    .sr-panel {
+      position: absolute;
+      top: 12px;
+      right: 75px;
+      width: 230px;
+      background: rgba(24, 28, 39, 0.94);
+      border: 1px solid #2a2e39;
+      border-radius: 6px;
+      z-index: 15;
+      font-size: 12px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease;
+    }
+    .sr-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      background: #1e222d;
+      border-bottom: 1px solid #2a2e39;
+      border-radius: 5px 5px 0 0;
+      color: #d1d4dc;
+      font-weight: 600;
+      user-select: none;
+    }
+    .mini-btn {
+      background: #2a2e39;
+      color: #9b9eb5;
+      border: 1px solid #363a45;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .mini-btn:hover {
+      color: #ffffff;
+      background: #363a45;
+    }
+    .sr-list {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .empty-sr {
+      color: #787b86;
+      font-style: italic;
+      font-size: 11px;
+      text-align: center;
+      padding: 8px 4px;
+    }
+    .sr-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      background: #1a1e29;
+      border-radius: 4px;
+      border-left: 3px solid #2962ff;
+    }
+    .sr-item.support {
+      border-left-color: #089981;
+    }
+    .sr-item.resistance {
+      border-left-color: #f23645;
+    }
+    .sr-item.auto {
+      border-left-style: dashed;
+    }
+    .sr-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .sr-label {
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .sr-price {
+      font-size: 12px;
+      font-family: monospace;
+      color: #e0e3eb;
+    }
+    .sr-del {
+      background: transparent;
+      border: none;
+      color: #787b86;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px 5px;
+      border-radius: 3px;
+      line-height: 1;
+    }
+    .sr-del:hover {
+      color: #f23645;
+      background: rgba(242, 54, 69, 0.15);
+    }
+
+    /* ── REMOVE TRADINGVIEW LOGO / ATTRIBUTION ── */
+    #tv-attr-logo,
+    a[href*="tradingview.com"],
+    div[id*="tv-attr"],
+    div[class*="tv-logo"],
+    div[class*="attribution"],
+    .tv-circle-logo {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      height: 0 !important;
+      width: 0 !important;
+    }
+    /* ── TradingView-Style Custom Right-Click Context Menu ── */
+    .context-menu {
+      display: none;
+      position: fixed;
+      background: #1e222d;
+      border: 1px solid #363a45;
+      border-radius: 8px;
+      padding: 6px 0;
+      min-width: 230px;
+      z-index: 9999;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      user-select: none;
+      font-size: 13px;
+      color: #d1d4dc;
+      animation: ctxFadeIn 0.12s ease-out;
+    }
+    @keyframes ctxFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .ctx-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .ctx-item:hover {
+      background: #2a2e39;
+      color: #ffffff;
+    }
+    .ctx-item.ctx-highlight {
+      color: #2962ff;
+      font-weight: 500;
+    }
+    .ctx-item.ctx-highlight:hover {
+      background: rgba(41, 98, 255, 0.18);
+      color: #5383ff;
+    }
+    .ctx-item.ctx-danger {
+      color: #f23645;
+      font-weight: 500;
+    }
+    .ctx-item.ctx-danger:hover {
+      background: rgba(242, 54, 69, 0.18);
+      color: #ff5263;
+    }
+    .ctx-icon {
+      font-size: 15px;
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .ctx-separator {
+      height: 1px;
+      background: #2a2e39;
+      margin: 5px 0;
+    }
+    /* Toast feedback banner */
+    .chart-toast {
+      display: none;
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(24, 28, 39, 0.95);
+      border: 1px solid #2962ff;
+      color: #ffffff;
+      padding: 7px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 10000;
+      pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      animation: toastFade 0.2s ease-out;
+    }
+    @keyframes toastFade {
+      from { opacity: 0; transform: translate(-50%, -8px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* ── Dark / Light Theme System ── */
+    body.theme-light {
+      background-color: #ffffff;
+      color: #131722;
+    }
+    body.theme-light #toolbar {
+      background: #ffffff;
+      border-bottom: 1px solid #e0e3eb;
+      color: #131722;
+    }
+    body.theme-light .tv-left-toolbar {
+      background: #ffffff;
+      border-right: 1px solid #e0e3eb;
+    }
+    body.theme-light #chart-wrapper,
+    body.theme-light #chart-container {
+      background-color: #ffffff !important;
+    }
+    body.theme-light .context-menu {
+      background: #ffffff;
+      border: 1px solid #e0e3eb;
+      color: #131722;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    }
+    body.theme-light .ctx-item:hover {
+      background: #f0f3fa;
+      color: #131722;
+    }
+    body.theme-light .ctx-separator {
+      background: #e0e3eb;
+    }
+    body.theme-light .sr-panel {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #e0e3eb;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+      color: #131722;
+    }
+    body.theme-light .sr-panel-header {
+      background: #f0f3fa;
+      border-bottom: 1px solid #e0e3eb;
+      color: #131722;
+    }
+    body.theme-light .sr-item {
+      background: #f0f3fa;
+    }
+    body.theme-light .sr-price {
+      color: #131722;
+    }
+    body.theme-light #replay-toolbar {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #e0e3eb;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      color: #131722;
+    }
+    body.theme-light .replay-btn {
+      background: #f0f3fa;
+      color: #131722;
+      border: 1px solid #e0e3eb;
+    }
+    body.theme-light .replay-btn:hover {
+      background: #e0e3eb;
+      color: #131722;
+    }
+    body.theme-light .replay-speed-select {
+      background: #f0f3fa;
+      color: #131722;
+      border: 1px solid #e0e3eb;
+    }
+    body.theme-light .tv-floating-toolbar {
+      background: #ffffff;
+      border: 1px solid #e0e3eb;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    body.theme-light .tv-floating-btn {
+      background: #f0f3fa;
+      color: #131722;
+      border: 1px solid #e0e3eb;
+    }
+    body.theme-light .tv-floating-btn:hover {
+      background: #e0e3eb;
+      color: #131722;
+    }
+    body.theme-light .tv-floating-btn.active {
+      background: #eef2ff;
+      color: #2962ff;
+      border-color: #2962ff;
+    }
+    body.theme-light .tv-floating-title {
+      color: #787b86;
+    }
+    body.theme-light .tv-floating-sep {
+      background: #e0e3eb;
+    }
+
+    body.theme-dark {
+      background-color: #131722;
+      color: #d1d4dc;
+    }
+    body.theme-dark #chart-wrapper,
+    body.theme-dark #chart-container {
+      background-color: #131722 !important;
+    }
+    body.theme-dark #toolbar {
+      background: #1e222d;
+      border-bottom: 1px solid #2a2e39;
+      color: #d1d4dc;
+    }
+    body.theme-dark .tv-btn,
+    body.theme-dark .tv-icon-btn {
+      color: #d1d4dc;
+    }
+    body.theme-dark .tv-btn:hover,
+    body.theme-dark .tv-icon-btn:hover {
+      background: #2a2e39;
+      color: #ffffff;
+    }
+    body.theme-dark .tv-symbol-pill {
+      background: #2a2e39;
+      color: #ffffff;
+    }
+    body.theme-dark .tv-symbol-pill:hover {
+      background: #363a45;
+    }
+    body.theme-dark .tv-divider {
+      background: #2a2e39;
+    }
+    body.theme-dark .tv-left-toolbar {
+      background: #1e222d;
+      border-right: 1px solid #2a2e39;
+    }
+    body.theme-dark .tv-left-btn {
+      color: #d1d4dc;
+    }
+    body.theme-dark .tv-left-btn:hover {
+      background: #2a2e39;
+      color: #ffffff;
+    }
+    body.theme-dark .tv-left-sep {
+      background: #2a2e39;
+    }
+    body.theme-dark .tv-dropdown-menu,
+    body.theme-dark .tv-flyout-menu {
+      background: #1e222d;
+      border: 1px solid #363a45;
+      color: #d1d4dc;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+    body.theme-dark .tv-menu-item,
+    body.theme-dark .tv-flyout-item {
+      color: #d1d4dc;
+    }
+    body.theme-dark .tv-menu-item:hover,
+    body.theme-dark .tv-flyout-item:hover {
+      background: #2a2e39;
+    }
+    body.theme-dark .tv-menu-divider,
+    body.theme-dark .tv-flyout-divider {
+      background: #2a2e39;
+    }
+    body.theme-dark .tv-trade-btn {
+      background: #1e222d;
+      color: #d1d4dc;
+      border-color: #363a45;
+    }
+    body.theme-dark .tv-trade-btn:hover {
+      background: #2a2e39;
+    }
+    body.theme-dark .tv-upgrade-btn {
+      background: #2962ff;
+      border-color: #2962ff;
+      color: #ffffff;
+    }
+
+    /* ── Mobile Responsive Optimizations (< 768px) ── */
+    .mobile-floating-btn {
+      display: none;
+    }
+    .mobile-backdrop {
+      display: none;
+    }
+
+    @media (max-width: 520px) {
+      html, body {
+        height: 100%;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      #toolbar {
+        height: 38px;
+        padding: 0 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      #toolbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Hide non-essential desktop buttons on mobile to maximize chart space */
+      #tv-avatar-btn,
+      #tv-compare-btn,
+      #tv-workspace-btn,
+      #tv-quicksearch-btn,
+      #tv-settings-btn,
+      #tv-camera-btn,
+      #tv-ideas-btn,
+      #tv-trade-btn,
+      #tv-upgrade-btn,
+      .tv-nav-spacer {
+        display: none !important;
+      }
+
+      .tv-divider {
+        margin: 0 2px;
+        height: 14px;
+      }
+      .tv-btn, .tv-icon-btn {
+        padding: 3px 6px;
+        font-size: 11px;
+      }
+      .tv-symbol-pill {
+        padding: 3px 8px;
+        font-size: 12px;
+        gap: 4px;
+      }
+
+      #main-layout {
+        height: calc(100dvh - 38px);
+        width: 100%;
+      }
+
+      /* Left Drawing Toolbar - slides over chart without shrinking the canvas */
+      .tv-left-toolbar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 150;
+        background: #1e222d;
+        border-right: 1px solid #363a45;
+        box-shadow: 4px 0 16px rgba(0, 0, 0, 0.7);
+        transform: translateX(-105%);
+        transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 44px;
+        padding: 6px 0;
+      }
+      .tv-left-toolbar.mobile-open {
+        transform: translateX(0);
+      }
+      .tv-left-toolbar .tv-left-btn {
+        color: #d1d4dc;
+        width: 34px;
+        height: 34px;
+      }
+      .tv-flyout-menu {
+        left: 44px;
+        width: 200px;
+      }
+
+      /* Floating Mobile Tools Pill Button (Bottom Left) */
+      .mobile-floating-btn {
+        display: inline-flex !important;
+        position: absolute;
+        bottom: 14px;
+        left: 12px;
+        z-index: 60;
+        background: rgba(30, 34, 45, 0.92);
+        border: 1px solid #363a45;
+        border-radius: 20px;
+        color: #d1d4dc;
+        padding: 6px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        gap: 5px;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        -webkit-tap-highlight-color: transparent;
+      }
+      .mobile-floating-btn:active {
+        background: #2962ff;
+        color: #ffffff;
+      }
+
+      /* Mobile Drawer Backdrop */
+      .mobile-backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 140;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .mobile-backdrop.active {
+        display: block !important;
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Compact S/R Floating Panel on mobile */
+      .sr-panel {
+        right: 8px;
+        top: 8px;
+        width: 155px;
+        font-size: 11px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+      }
+      .sr-panel-header {
+        padding: 4px 8px;
+        font-size: 11px;
+      }
+      .sr-list {
+        max-height: 140px;
+        padding: 4px;
+      }
+
+      /* Floating Bar Replay Controller on mobile */
+      #replay-toolbar {
+        bottom: 8px;
+        width: 95%;
+        max-width: 360px;
+        padding: 4px 8px;
+        gap: 5px;
+        border-radius: 6px;
+      }
+      .replay-counter {
+        display: none;
+      }
+      .replay-slider {
+        width: 80px;
+      }
+      .replay-btn {
+        padding: 4px 6px;
+        font-size: 11px;
+      }
+      .replay-badge {
+        padding: 2px 5px;
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hidden selects for seamless internal state bindings -->
+  <select id="symbol-select" style="display: none;">
+    <option value="EURUSD" selected>EUR / USD</option>
+    <option value="BTCUSDT">BTC / USDT</option>
+    <option value="ETHUSDT">ETH / USDT</option>
+  </select>
+  <select id="indicator-select" style="display: none;">
+    <option value="none" selected>No Indicator</option>
+    <option value="ema20">EMA 20</option>
+    <option value="ema50">EMA 50</option>
+    <option value="sma200">SMA 200</option>
+  </select>
+
+  <!-- ── TradingView Official Top Navigation Bar (Exact Replica) ── -->
+  <div id="toolbar" class="tv-navbar">
+    <!-- Left Section -->
+    <div class="tv-nav-left">
+      <!-- Profile Avatar with 11 Notification Badge -->
+      <div id="tv-avatar-btn" class="tv-avatar-wrap" title="Ilyaas Abdirahman • Pro Trader (11 notifications)">
+        <div class="tv-avatar">I</div>
+        <span class="tv-badge">11</span>
+      </div>
+
+      <!-- Symbol Pill (EURUSD) -->
+      <div class="tv-dropdown-anchor">
+        <div id="tv-symbol-pill" class="tv-symbol-pill" title="Symbol Search (Click to change)">
+          <span id="tv-symbol-text">EURUSD</span>
+          <!-- TV Sliders / Compare icon -->
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+            <line x1="4" y1="2" x2="4" y2="14" />
+            <circle cx="4" cy="6" r="2" fill="currentColor" />
+            <line x1="12" y1="2" x2="12" y2="14" />
+            <circle cx="12" cy="10" r="2" fill="currentColor" />
+          </svg>
+        </div>
+
+        <!-- Symbol Dropdown Menu -->
+        <div id="tv-symbol-menu" class="tv-dropdown-menu">
+          <div class="tv-menu-header">Symbol Search</div>
+          <div class="tv-menu-item active" data-symbol="EURUSD">
+            <span class="tv-menu-symbol">EURUSD</span>
+            <span class="tv-menu-desc">Euro / US Dollar • FOREX</span>
+          </div>
+          <div class="tv-menu-item" data-symbol="BTCUSDT">
+            <span class="tv-menu-symbol">BTCUSDT</span>
+            <span class="tv-menu-desc">Bitcoin / Tether • CRYPTO</span>
+          </div>
+          <div class="tv-menu-item" data-symbol="ETHUSDT">
+            <span class="tv-menu-symbol">ETHUSDT</span>
+            <span class="tv-menu-desc">Ethereum / Tether • CRYPTO</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compare (+) Button -->
+      <button id="tv-compare-btn" class="tv-icon-btn" title="Compare or Add Symbol">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="9" cy="9" r="7.5" />
+          <line x1="9" y1="5.5" x2="9" y2="12.5" />
+          <line x1="5.5" y1="9" x2="12.5" y2="9" />
+        </svg>
+      </button>
+
+      <div class="tv-divider"></div>
+
+      <!-- Timeframe (D) -->
+      <div class="tv-dropdown-anchor">
+        <button id="tv-timeframe-btn" class="tv-btn tv-timeframe-btn" title="Timeframe: Daily (D)">
+          <span id="tv-timeframe-text">D</span>
+        </button>
+        <!-- Timeframe Dropdown Menu -->
+        <div id="tv-timeframe-menu" class="tv-dropdown-menu tv-dropdown-sm">
+          <div class="tv-menu-item" data-tf="1m">1m (1 Minute)</div>
+          <div class="tv-menu-item" data-tf="5m">5m (5 Minutes)</div>
+          <div class="tv-menu-item" data-tf="15m">15m (15 Minutes)</div>
+          <div class="tv-menu-item" data-tf="1h">1h (1 Hour)</div>
+          <div class="tv-menu-item" data-tf="4h">4h (4 Hours)</div>
+          <div class="tv-menu-item active" data-tf="D">D (1 Day)</div>
+        </div>
+      </div>
+
+      <div class="tv-divider"></div>
+
+      <!-- Chart Style (Candles) -->
+      <button id="tv-chart-style-btn" class="tv-icon-btn" title="Candlestick Chart">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+          <line x1="5.5" y1="2" x2="5.5" y2="16" stroke="currentColor" stroke-width="1.4" />
+          <rect x="3.5" y="5" width="4" height="7" rx="0.5" fill="currentColor" />
+          <line x1="12.5" y1="2" x2="12.5" y2="16" stroke="currentColor" stroke-width="1.4" />
+          <rect x="10.5" y="7" width="4" height="5" rx="0.5" fill="currentColor" />
+        </svg>
+      </button>
+
+      <div class="tv-divider"></div>
+
+      <!-- Indicators Dropdown -->
+      <div class="tv-dropdown-anchor">
+        <button id="tv-indicators-btn" class="tv-btn" title="Indicators & Strategies">
+          <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M2 13l4-5 4 3 6-7" />
+            <rect x="2" y="14" width="2" height="2" fill="currentColor" />
+            <rect x="6" y="11" width="2" height="5" fill="currentColor" />
+            <rect x="10" y="13" width="2" height="3" fill="currentColor" />
+            <rect x="14" y="9" width="2" height="7" fill="currentColor" />
+          </svg>
+          <span>Indicators</span>
+          <svg class="tv-chevron" width="8" height="8" viewBox="0 0 10 10" fill="currentColor">
+            <path d="M2.5 3.5l2.5 3 2.5-3z"/>
+          </svg>
+        </button>
+
+        <!-- Indicators Dropdown Menu -->
+        <div id="tv-indicators-menu" class="tv-dropdown-menu">
+          <div class="tv-menu-header">Technical Indicators</div>
+          <div class="tv-menu-item active" data-indicator="none">🚫 No Indicator</div>
+          <div class="tv-menu-item" data-indicator="ema20">📈 EMA 20 (Fast)</div>
+          <div class="tv-menu-item" data-indicator="ema50">📈 EMA 50 (Trend)</div>
+          <div class="tv-menu-item" data-indicator="sma200">📈 SMA 200 (Long Term)</div>
+          <div class="tv-menu-divider"></div>
+          <div class="tv-menu-header">Support & Resistance Tools</div>
+          <div class="tv-menu-item" id="btn-auto-sr">🎯 Auto S/R Levels</div>
+          <div class="tv-menu-item" id="btn-add-support">🟢 + Support Line</div>
+          <div class="tv-menu-item" id="btn-add-resistance">🔴 + Resistance Line</div>
+          <div class="tv-menu-item" id="btn-clear-sr">🗑️ Clear All S/R Lines</div>
+          <div class="tv-menu-divider"></div>
+          <div class="tv-menu-item" id="btn-price-range">📊 Price Range (Measurement • Shift + P)</div>
+          <div class="tv-menu-item" id="btn-measure">📏 Measure / Ruler Tool</div>
+          <div class="tv-menu-item" id="btn-clean-chart">🕯️ Clean Chart Only</div>
+        </div>
+      </div>
+
+      <!-- Alert -->
+      <button id="tv-alert-btn" class="tv-btn" title="Create Alert (Alt + A)">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7">
+          <circle cx="8" cy="9.5" r="6" />
+          <polyline points="8,6.5 8,9.5 10.5,10.5" />
+          <path d="M11.5 4.5l2-2M4.5 4.5l-2-2" />
+          <circle cx="13.5" cy="13.5" r="2.5" fill="#ffffff" stroke="currentColor" stroke-width="1.2" />
+          <line x1="13.5" y1="12" x2="13.5" y2="15" stroke="currentColor" stroke-width="1.2" />
+          <line x1="12" y1="13.5" x2="15" y2="13.5" stroke="currentColor" stroke-width="1.2" />
+        </svg>
+        <span>Alert</span>
+      </button>
+
+      <!-- Replay (Official TV Style with << icon) -->
+      <button id="btn-replay" class="tv-btn tv-replay-btn" title="Bar Replay: Click any candle to cut chart and hide future completely (Space to Play/Pause, → to Step)">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="currentColor">
+          <path d="M8.5 4.5l-6 4.5 6 4.5V4.5zM15.5 4.5l-6 4.5 6 4.5V4.5z" />
+        </svg>
+        <span>Replay</span>
+      </button>
+
+      <div class="tv-divider"></div>
+
+      <!-- Undo / Redo -->
+      <button id="btn-undo" class="tv-icon-btn" title="Undo (Ctrl + Z)">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M4 7h7a5 5 0 0 1 5 5v1" />
+          <polyline points="7,4 3.5,7 7,10" />
+        </svg>
+      </button>
+      <button id="btn-redo" class="tv-icon-btn" title="Redo (Ctrl + Y)">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M14 7H7a5 5 0 0 0-5 5v1" />
+          <polyline points="11,4 14.5,7 11,10" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Flexible Middle Spacer -->
+    <div class="tv-nav-spacer"></div>
+
+    <!-- Right Section -->
+    <div class="tv-nav-right">
+      <!-- Layout / Unnamed -->
+      <div class="tv-dropdown-anchor">
+        <button id="tv-workspace-btn" class="tv-btn" title="Layout management">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="2.5" y="2.5" width="13" height="13" rx="2" />
+          </svg>
+          <span>Unnamed</span>
+          <svg class="tv-chevron" width="8" height="8" viewBox="0 0 10 10" fill="currentColor">
+            <path d="M2.5 3.5l2.5 3 2.5-3z"/>
+          </svg>
+        </button>
+        <div id="tv-workspace-menu" class="tv-dropdown-menu tv-dropdown-sm tv-dropdown-right">
+          <div class="tv-menu-item active">Unnamed (Auto-saved)</div>
+          <div class="tv-menu-item" id="menu-save-layout">Save Layout</div>
+          <div class="tv-menu-item" id="menu-reset-view">Reset View</div>
+        </div>
+      </div>
+
+      <!-- Quick Search -->
+      <button id="tv-quicksearch-btn" class="tv-icon-btn" title="Quick Search (Ctrl + K)">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7">
+          <circle cx="8" cy="8" r="5" />
+          <line x1="12" y1="12" x2="16" y2="16" />
+          <path d="M7 5l-1 3.5h2l-1 3" stroke-width="1.2" stroke-linejoin="round" />
+        </svg>
+      </button>
+
+      <!-- Settings (Gear) -->
+      <button id="tv-settings-btn" class="tv-icon-btn" title="Chart Settings">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7">
+          <circle cx="9" cy="9" r="2.8" />
+          <path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.5 1.5M12.8 12.8l1.5 1.5M3.7 14.3l1.5-1.5M12.8 5.2l1.5-1.5" />
+        </svg>
+      </button>
+
+      <!-- Dark / Light Mode Toggle Button -->
+      <button id="tv-theme-btn" class="tv-icon-btn" title="Dark Mode: ON (Click to turn Dark Mode OFF)">
+        <svg id="theme-icon-sun" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="10" cy="10" r="4" />
+          <line x1="10" y1="1.5" x2="10" y2="3.5" />
+          <line x1="10" y1="16.5" x2="10" y2="18.5" />
+          <line x1="1.5" y1="10" x2="3.5" y2="10" />
+          <line x1="16.5" y1="10" x2="18.5" y2="10" />
+          <line x1="4" y1="4" x2="5.4" y2="5.4" />
+          <line x1="14.6" y1="14.6" x2="16" y2="16" />
+          <line x1="4" y1="16" x2="5.4" y2="14.6" />
+          <line x1="14.6" y1="5.4" x2="16" y2="4" />
+        </svg>
+        <svg id="theme-icon-moon" style="display:none;" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M17.5 12.8A7.5 7.5 0 0 1 7.2 2.5a8 8 0 1 0 10.3 10.3z" />
+        </svg>
+      </button>
+
+      <!-- Fullscreen -->
+      <button id="tv-fullscreen-btn" class="tv-icon-btn" title="Fullscreen Mode (F)">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 6.5V3h3.5M15 6.5V3h-3.5M3 11.5V15h3.5M15 11.5V15h-3.5" />
+        </svg>
+      </button>
+
+      <!-- Camera / Snapshot -->
+      <button id="tv-camera-btn" class="tv-icon-btn" title="Take a snapshot">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M2.5 6.5h3l1.5-2.5h4l1.5 2.5h3a1.5 1.5 0 0 1 1.5 1.5v6.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 1 14.5V8a1.5 1.5 0 0 1 1.5-1.5z" />
+          <circle cx="9" cy="11" r="2.8" />
+        </svg>
+      </button>
+
+      <!-- Lightbulb (Publish / Community Ideas) -->
+      <button id="tv-ideas-btn" class="tv-icon-btn" title="Publish Idea / Community">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M6 13.5h6M7 15.5h4M9 2.5a5 5 0 0 0-5 5c0 2 1.3 3.5 2 4.5h6c.7-1 2-2.5 2-4.5a5 5 0 0 0-5-5z" />
+        </svg>
+      </button>
+
+      <!-- Trade Button -->
+      <button id="tv-trade-btn" class="tv-pill-btn tv-trade-btn" title="Paper Trading">
+        Trade
+      </button>
+
+      <!-- Upgrade Button -->
+      <button id="tv-upgrade-btn" class="tv-pill-btn tv-upgrade-btn" title="Upgrade Plan">
+        Upgrade
+      </button>
+    </div>
+  </div>
+
+  <!-- App Main Layout: Left Drawing Sidebar + Chart Area -->
+  <div id="main-layout">
+    <!-- TradingView Left Vertical Drawing Toolbar -->
+    <div id="tv-left-sidebar" class="tv-left-toolbar">
+      <!-- 1. Cursor / Crosshair -->
+      <button id="tool-cursor" class="tv-left-btn active" title="Crosshair / Select (Esc)">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="9" cy="9" r="2" fill="currentColor" />
+          <line x1="9" y1="2" x2="9" y2="6" />
+          <line x1="9" y1="12" x2="9" y2="16" />
+          <line x1="2" y1="9" x2="6" y2="9" />
+          <line x1="12" y1="9" x2="16" y2="9" />
+        </svg>
+      </button>
+
+      <!-- 2. Lines & Channels Group (Trendline) -->
+      <div class="tv-tool-group">
+        <button id="tool-trendline" class="tv-left-btn" title="Trendline (Alt + T)">
+          <!-- Trendline Icon -->
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <line x1="4" y1="16" x2="16" y2="4" />
+            <circle cx="4" cy="16" r="2.2" fill="currentColor" />
+            <circle cx="16" cy="4" r="2.2" fill="currentColor" />
+          </svg>
+          <span id="tool-lines-arrow" class="tv-sub-arrow" title="Line Tools Menu"></span>
+        </button>
+
+        <!-- Lines & Channels Flyout Dropdown Menu (Exact 1:1 match to user screenshot) -->
+        <div id="tv-lines-flyout" class="tv-flyout-menu">
+          <div class="tv-flyout-header">Lines</div>
+          
+          <div class="tv-flyout-item active" data-line-tool="trendline">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="4" y1="16" x2="16" y2="4" />
+                <circle cx="4" cy="16" r="2" fill="currentColor" />
+                <circle cx="16" cy="4" r="2" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Trendline</span>
+            <span class="tv-flyout-shortcut">Alt + T</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="ray">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="4" y1="16" x2="18" y2="3" />
+                <circle cx="4" cy="16" r="2" fill="currentColor" />
+                <circle cx="12" cy="8.5" r="2" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Ray</span>
+            <span class="tv-flyout-shortcut">Alt + R</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="info-line">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="4" y1="16" x2="16" y2="4" />
+                <circle cx="4" cy="16" r="1.8" fill="currentColor" />
+                <circle cx="16" cy="4" r="1.8" fill="currentColor" />
+                <rect x="8" y="11" width="7" height="4.5" rx="1" stroke-width="1.2" fill="none" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Info line</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="extended-line">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="2" y1="18" x2="18" y2="2" />
+                <circle cx="6" cy="14" r="2" fill="currentColor" />
+                <circle cx="14" cy="6" r="2" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Extended line</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="trend-angle">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="3" y1="16" x2="17" y2="16" />
+                <line x1="3" y1="16" x2="15" y2="4" />
+                <circle cx="3" cy="16" r="1.8" fill="currentColor" />
+                <circle cx="15" cy="4" r="1.8" fill="currentColor" />
+                <path d="M7 16 A5 5 0 0 0 8.5 12" stroke-width="1.2" fill="none" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Trend angle</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="horizontal-line">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="2" y1="10" x2="18" y2="10" />
+                <circle cx="6" cy="10" r="2" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Horizontal line</span>
+            <span class="tv-flyout-shortcut">Alt + H</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="horizontal-ray">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="4" y1="10" x2="18" y2="10" />
+                <circle cx="4" cy="10" r="2" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Horizontal ray</span>
+            <span class="tv-flyout-shortcut">Alt + J</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="vertical-line">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="10" y1="2" x2="10" y2="18" />
+                <circle cx="10" cy="10" r="2" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Vertical line</span>
+            <span class="tv-flyout-shortcut">Alt + V</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="crossline">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="10" y1="2" x2="10" y2="18" />
+                <line x1="2" y1="10" x2="18" y2="10" />
+                <circle cx="10" cy="10" r="2" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Crossline</span>
+            <span class="tv-flyout-shortcut">Alt + C</span>
+          </div>
+
+          <div class="tv-flyout-divider"></div>
+          <div class="tv-flyout-header">Channels</div>
+
+          <div class="tv-flyout-item" data-line-tool="parallel-channel">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+                <line x1="3" y1="16" x2="16" y2="3" />
+                <line x1="7" y1="18" x2="18" y2="7" stroke-dasharray="2,2" />
+                <circle cx="3" cy="16" r="1.8" fill="currentColor" />
+                <circle cx="16" cy="3" r="1.8" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Parallel channel</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="regression-trend">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+                <line x1="3" y1="15" x2="17" y2="5" />
+                <rect x="3" y="4" width="14" height="12" stroke-dasharray="2,2" fill="none" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Regression trend</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="flat-top-bottom">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+                <line x1="3" y1="6" x2="17" y2="6" />
+                <line x1="3" y1="16" x2="17" y2="11" />
+                <circle cx="3" cy="16" r="1.8" fill="currentColor" />
+                <circle cx="17" cy="11" r="1.8" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Flat top/bottom</span>
+          </div>
+
+          <div class="tv-flyout-item" data-line-tool="disjoint-channel">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+                <line x1="3" y1="10" x2="17" y2="4" />
+                <line x1="3" y1="10" x2="17" y2="16" />
+                <circle cx="3" cy="10" r="1.8" fill="currentColor" />
+                <circle cx="17" cy="4" r="1.8" fill="currentColor" />
+                <circle cx="17" cy="16" r="1.8" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Disjoint channel</span>
+          </div>
+
+          <div class="tv-flyout-divider"></div>
+          <div class="tv-flyout-header">Shapes</div>
+          <div class="tv-flyout-item" data-line-tool="rectangle">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <rect x="3" y="5" width="14" height="10" rx="1.5" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Rectangle</span>
+            <span class="tv-flyout-shortcut">Shift + R</span>
+          </div>
+          <div class="tv-flyout-item" data-line-tool="rotated-rectangle">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <polygon points="4,15 15,11 13,5 2,9" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Rotated Rectangle</span>
+          </div>
+          <div class="tv-flyout-item" data-line-tool="ellipse">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <ellipse cx="10" cy="10" rx="7.5" ry="5" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Ellipse</span>
+            <span class="tv-flyout-shortcut">Shift + E</span>
+          </div>
+          <div class="tv-flyout-item" data-line-tool="brush">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <path d="M14.5 3.5a2.12 2.12 0 0 1 3 3L11 13l-4 1 1-4 6.5-6.5z" />
+                <path d="M4 17c-1 0-2 .5-2 1.5S3 20 4.5 20s2.5-.5 2.5-1.5S6 17 4 17z" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Brush</span>
+            <span class="tv-flyout-shortcut">Alt + B</span>
+          </div>
+          <div class="tv-flyout-item" data-line-tool="path">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <polyline points="3,15 8,7 13,12 17,4" />
+                <polyline points="14,4 17,4 17,7" stroke-width="1.7" />
+                <circle cx="3" cy="15" r="1.8" fill="currentColor" />
+                <circle cx="8" cy="7" r="1.8" fill="currentColor" />
+                <circle cx="13" cy="12" r="1.8" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Path</span>
+            <span class="tv-flyout-shortcut">Alt + P</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Geometric Shapes Group (Rectangle, Rotated Rectangle, Ellipse & Path) -->
+      <div class="tv-tool-group">
+        <button id="tool-rectangle" class="tv-left-btn" title="Rectangle Tool (Shift + R)">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <rect x="3" y="5" width="14" height="10" rx="1.5" />
+          </svg>
+          <span id="tool-shapes-arrow" class="tv-sub-arrow" title="Geometric Shapes Menu"></span>
+        </button>
+
+        <!-- Shapes Flyout Menu -->
+        <div id="tv-shapes-flyout" class="tv-flyout-menu">
+          <div class="tv-flyout-header">Geometric Shapes</div>
+          <div class="tv-flyout-item" data-shape-tool="brush">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <path d="M14.5 3.5a2.12 2.12 0 0 1 3 3L11 13l-4 1 1-4 6.5-6.5z" />
+                <path d="M4 17c-1 0-2 .5-2 1.5S3 20 4.5 20s2.5-.5 2.5-1.5S6 17 4 17z" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Brush</span>
+            <span class="tv-flyout-shortcut">Alt + B</span>
+          </div>
+          <div class="tv-flyout-item active" data-shape-tool="rectangle">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <rect x="3" y="5" width="14" height="10" rx="1.5" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Rectangle</span>
+            <span class="tv-flyout-shortcut">Shift + R</span>
+          </div>
+          <div class="tv-flyout-item" data-shape-tool="rotated-rectangle">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <polygon points="4,15 15,11 13,5 2,9" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Rotated Rectangle</span>
+          </div>
+          <div class="tv-flyout-item" data-shape-tool="ellipse">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <ellipse cx="10" cy="10" rx="7.5" ry="5" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Ellipse</span>
+            <span class="tv-flyout-shortcut">Shift + E</span>
+          </div>
+          <div class="tv-flyout-item" data-shape-tool="path">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <polyline points="3,15 8,7 13,12 17,4" />
+                <polyline points="14,4 17,4 17,7" stroke-width="1.7" />
+                <circle cx="3" cy="15" r="1.8" fill="currentColor" />
+                <circle cx="8" cy="7" r="1.8" fill="currentColor" />
+                <circle cx="13" cy="12" r="1.8" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Path</span>
+            <span class="tv-flyout-shortcut">Alt + P</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Prediction & Measurement Group (Price Range, etc.) -->
+      <div class="tv-tool-group">
+        <button id="tool-price-range" class="tv-left-btn" title="Price Range Tool (Shift + P)">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+            <line x1="3" y1="4" x2="17" y2="4" stroke-width="2" />
+            <line x1="3" y1="16" x2="17" y2="16" stroke-width="2" />
+            <line x1="10" y1="5.5" x2="10" y2="14.5" stroke-dasharray="2,1.5" />
+            <polygon points="10,4.5 7.5,7.5 12.5,7.5" fill="currentColor" />
+            <polygon points="10,15.5 7.5,12.5 12.5,12.5" fill="currentColor" />
+          </svg>
+          <span id="tool-range-arrow" class="tv-sub-arrow" title="Range Tools Menu"></span>
+        </button>
+
+        <!-- Range Flyout Menu -->
+        <div id="tv-range-flyout" class="tv-flyout-menu">
+          <div class="tv-flyout-header">Prediction & Measurement</div>
+          <div class="tv-flyout-item active" data-range-tool="price-range">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="3" y1="4" x2="17" y2="4" stroke-width="2" />
+                <line x1="3" y1="16" x2="17" y2="16" stroke-width="2" />
+                <line x1="10" y1="5.5" x2="10" y2="14.5" stroke-dasharray="2,1.5" />
+                <polygon points="10,4.5 7.5,7.5 12.5,7.5" fill="currentColor" />
+                <polygon points="10,15.5 7.5,12.5 12.5,12.5" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Price Range</span>
+            <span class="tv-flyout-shortcut">Shift + P</span>
+          </div>
+          <div class="tv-flyout-item" data-range-tool="date-range" style="opacity: 0.65;" title="Sibling tool sharing RangeMeasureBase">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7">
+                <line x1="4" y1="3" x2="4" y2="17" stroke-width="2" />
+                <line x1="16" y1="3" x2="16" y2="17" stroke-width="2" />
+                <line x1="5.5" y1="10" x2="14.5" y2="10" stroke-dasharray="2,1.5" />
+                <polygon points="4.5,10 7.5,7.5 7.5,12.5" fill="currentColor" />
+                <polygon points="15.5,10 12.5,7.5 12.5,12.5" fill="currentColor" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Date Range</span>
+            <span class="tv-flyout-shortcut" style="font-size: 10px; color: #787b86;">(Sibling Base)</span>
+          </div>
+          <div class="tv-flyout-item" data-range-tool="date-price-range" style="opacity: 0.65;" title="Sibling tool sharing RangeMeasureBase">
+            <div class="tv-flyout-icon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+                <rect x="3" y="3" width="14" height="14" stroke-dasharray="2,2" fill="none" />
+                <line x1="3" y1="3" x2="17" y2="17" />
+              </svg>
+            </div>
+            <span class="tv-flyout-label">Date and Price Range</span>
+            <span class="tv-flyout-shortcut" style="font-size: 10px; color: #787b86;">(Sibling Base)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Measure / Ruler Tool -->
+      <button id="tool-left-measure" class="tv-left-btn" title="Measure Ruler Tool">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7">
+          <rect x="2" y="7" width="14" height="6" rx="1" />
+          <line x1="5" y1="7" x2="5" y2="10" />
+          <line x1="8" y1="7" x2="8" y2="11" />
+          <line x1="11" y1="7" x2="11" y2="10" />
+          <line x1="14" y1="7" x2="14" y2="11" />
+        </svg>
+      </button>
+
+      <div class="tv-left-sep"></div>
+
+      <!-- 4. Support & Resistance Tool -->
+      <button id="tool-left-sr" class="tv-left-btn" title="Auto Support & Resistance Levels">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7">
+          <line x1="2" y1="5" x2="16" y2="5" stroke="#f23645" stroke-dasharray="2,2" />
+          <line x1="2" y1="13" x2="16" y2="13" stroke="#089981" stroke-dasharray="2,2" />
+          <path d="M4 12l3-5 3 4 4-5" />
+        </svg>
+      </button>
+
+      <!-- 5. Clean Chart -->
+      <button id="tool-left-clean" class="tv-left-btn" title="Clean All Drawings & Indicators">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M3 5h12M7 5V3h4v2M5 5v10a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V5" />
+          <line x1="7.5" y1="8" x2="7.5" y2="13" />
+          <line x1="10.5" y1="8" x2="10.5" y2="13" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Chart and Overlay -->
+    <div id="chart-wrapper">
+      <div id="chart-container"></div>
+      <canvas id="drawings-canvas"></canvas>
+      <canvas id="measure-canvas"></canvas>
+      <div id="measure-badge"></div>
+
+      <!-- Floating Drawing Formatting Toolbar (Trendlines, Rays, etc.) -->
+      <div id="trendline-toolbar" class="tv-floating-toolbar">
+        <span class="tv-floating-title" id="tl-toolbar-title">Line</span>
+        <div class="tv-color-swatches">
+          <div class="tv-color-dot active" data-color="#2962ff" style="background: #2962ff;" title="Blue"></div>
+          <div class="tv-color-dot" data-color="#089981" style="background: #089981;" title="Green"></div>
+          <div class="tv-color-dot" data-color="#f23645" style="background: #f23645;" title="Red"></div>
+          <div class="tv-color-dot" data-color="#f7931a" style="background: #f7931a;" title="Orange"></div>
+          <div class="tv-color-dot" data-color="#9c27b0" style="background: #9c27b0;" title="Purple"></div>
+          <div class="tv-color-dot" data-color="#ffffff" style="background: #ffffff; border: 1px solid #787b86;" title="White"></div>
+        </div>
+        <div class="tv-floating-sep"></div>
+        <button class="tv-floating-btn" id="tl-width-btn" title="Line Thickness (1px - 4px)">2px</button>
+        <button class="tv-floating-btn" id="tl-style-btn" title="Toggle Style (Solid / Dashed / Dotted)">━</button>
+        <button class="tv-floating-btn" id="tl-ray-btn" title="Toggle Ray Mode (Extend Right)">➡️ Ray</button>
+        <button class="tv-floating-btn" id="tl-lock-btn" title="Lock / Unlock Drawing">🔓</button>
+        <button class="tv-floating-btn" id="tl-clone-btn" title="Duplicate Drawing">📋</button>
+        <div class="tv-floating-sep"></div>
+        <button class="tv-floating-btn tv-danger-btn" id="tl-delete-btn" title="Delete Drawing (Delete / Backspace)">🗑️</button>
+      </div>
+
+    <!-- Interactive Placement / Cut Banner -->
+    <div id="action-banner"></div>
+
+    <!-- Notification Toast Feedback -->
+    <div id="chart-toast" class="chart-toast"></div>
+
+    <!-- Floating Bar Replay Controller -->
+    <div id="replay-toolbar">
+      <div class="replay-badge" title="Replay Mode is Active">
+        <span class="replay-pulse"></span>
+        <span>REPLAY</span>
+      </div>
+
+      <div class="replay-controls">
+        <!-- Cut Again -->
+        <button id="btn-replay-cut-again" class="replay-btn" title="Pick another candle to cut (Jump to Bar)">
+          ✂️ Cut
+        </button>
+
+        <div class="replay-sep"></div>
+
+        <!-- Step Back 1 Bar -->
+        <button id="btn-replay-prev" class="replay-btn" title="Rewind 1 bar (← Arrow Left)">
+          ⏮
+        </button>
+
+        <!-- Play / Pause -->
+        <button id="btn-replay-play" class="replay-btn replay-play-btn" title="Play / Pause Replay (Spacebar)">
+          <span id="replay-play-icon">▶</span>
+          <span id="replay-play-label">Play</span>
+        </button>
+
+        <!-- Step Forward 1 Bar -->
+        <button id="btn-replay-next" class="replay-btn replay-step-btn" title="Next Bar (→ Arrow Right)">
+          <span>⏭</span>
+          <span>Next</span>
+        </button>
+
+        <div class="replay-sep"></div>
+
+        <!-- Speed Dropdown -->
+        <select id="replay-speed-select" class="replay-speed-select" title="Replay Speed">
+          <option value="100">0.1s (Fastest)</option>
+          <option value="250">0.25s (Fast)</option>
+          <option value="500" selected>0.5s (Normal)</option>
+          <option value="1000">1.0s (1s / bar)</option>
+          <option value="2000">2.0s (Slow)</option>
+        </select>
+
+        <div class="replay-sep"></div>
+
+        <!-- Scrubber Slider -->
+        <div class="replay-scrubber-wrap">
+          <input type="range" id="replay-slider" class="replay-slider" min="1" max="100" value="1" step="1" title="Scrub through historical bars">
+          <span id="replay-counter" class="replay-counter">Bar: 1/1</span>
+        </div>
+
+        <div class="replay-sep"></div>
+
+        <!-- Exit Replay -->
+        <button id="btn-replay-exit" class="replay-btn replay-exit-btn" title="Exit Replay and Show All Candlesticks">
+          ✕ Exit
+        </button>
+      </div>
+    </div>
+
+    <!-- TradingView-Style Custom Right-Click Context Menu -->
+    <div id="chart-context-menu" class="context-menu">
+      <!-- 1. Bar Replay / Cut at Right-Click Position -->
+      <div id="ctx-cut-item" class="ctx-item ctx-highlight" data-action="cut-here">
+        <span class="ctx-icon">✂️</span>
+        <span id="ctx-cut-text"><b>Cut / Replay Here</b></span>
+      </div>
+
+      <div id="ctx-exit-replay-item" class="ctx-item" data-action="exit-replay" style="display: none;">
+        <span class="ctx-icon">✕</span>
+        <span>Exit Replay (Show All Candles)</span>
+      </div>
+
+      <div class="ctx-separator"></div>
+
+      <!-- 2. Clean Chart: Only Candlesticks -->
+      <div class="ctx-item" data-action="clean-chart">
+        <span class="ctx-icon">🕯️</span>
+        <span><b>Clean Chart Only</b> (Pure Candles)</span>
+      </div>
+
+      <!-- 3. Dynamic S/R & Drawing Operations -->
+      <div id="ctx-line-separator" class="ctx-separator" style="display: none;"></div>
+      <div id="ctx-delete-line" class="ctx-item ctx-danger" data-action="delete-line" style="display: none;">
+        <span class="ctx-icon">✕</span>
+        <span id="ctx-delete-line-text">Delete Line</span>
+      </div>
+      <div id="ctx-duplicate-line" class="ctx-item" data-action="duplicate-line" style="display: none;">
+        <span class="ctx-icon">📋</span>
+        <span>Duplicate Drawing</span>
+      </div>
+      <div id="ctx-lock-line" class="ctx-item" data-action="lock-line" style="display: none;">
+        <span class="ctx-icon" id="ctx-lock-icon">🔒</span>
+        <span id="ctx-lock-text">Lock Drawing</span>
+      </div>
+      <div id="ctx-ray-line" class="ctx-item" data-action="toggle-ray" style="display: none;">
+        <span class="ctx-icon">➡️</span>
+        <span id="ctx-ray-text">Extend Right (Ray)</span>
+      </div>
+      <div id="ctx-settings-rect" class="ctx-item" data-action="settings-rect" style="display: none;">
+        <span class="ctx-icon">⚙️</span>
+        <span>Settings...</span>
+      </div>
+      <div id="ctx-alert-rect" class="ctx-item" data-action="alert-rect" style="display: none;">
+        <span class="ctx-icon">⏰</span>
+        <span>Create Alert on Rectangle...</span>
+      </div>
+      <div id="ctx-order-front" class="ctx-item" data-action="order-front" style="display: none;">
+        <span class="ctx-icon">⬆️</span>
+        <span>Bring to Front</span>
+      </div>
+      <div id="ctx-order-back" class="ctx-item" data-action="order-back" style="display: none;">
+        <span class="ctx-icon">⬇️</span>
+        <span>Send to Back</span>
+      </div>
+
+      <div class="ctx-separator"></div>
+
+      <!-- 4. Other Chart Tools -->
+      <div class="ctx-item" data-action="remove-indicators">
+        <span class="ctx-icon">📈</span>
+        <span>Remove Indicators</span>
+      </div>
+      <div class="ctx-item" data-action="clear-sr">
+        <span class="ctx-icon">📐</span>
+        <span>Remove All S/R Lines</span>
+      </div>
+      <div class="ctx-item" data-action="clear-measure">
+        <span class="ctx-icon">📏</span>
+        <span>Clear Measurement</span>
+      </div>
+
+      <div class="ctx-separator"></div>
+
+      <!-- 5. Dark / Light Mode Toggle -->
+      <div class="ctx-item" data-action="toggle-theme">
+        <span class="ctx-icon" id="ctx-theme-icon">☀️</span>
+        <span id="ctx-theme-text">Turn Dark Mode OFF (Light)</span>
+      </div>
+
+      <div class="ctx-separator"></div>
+
+      <div class="ctx-item" data-action="reset-chart">
+        <span class="ctx-icon">🔄</span>
+        <span>Reset View / Fit Screen</span>
+      </div>
+    </div>
+
+    <!-- Mobile Drawing Tools Toggle Button (Floating Bottom-Left) -->
+    <button id="mobile-tools-btn" class="mobile-floating-btn" title="Toggle Drawing Tools">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="4" y1="16" x2="16" y2="4" />
+        <circle cx="4" cy="16" r="2.2" fill="currentColor" />
+        <circle cx="16" cy="4" r="2.2" fill="currentColor" />
+      </svg>
+      <span>Tools</span>
+    </button>
+    <div id="mobile-tools-backdrop" class="mobile-backdrop"></div>
+  </div>
+</div>
+
+  <script>
+    // ── Global DOM References ──
+    const chartWrapper = document.getElementById('chart-wrapper');
+    const container = document.getElementById('chart-container');
+    const measureCanvas = document.getElementById('measure-canvas');
+    const drawingsCanvas = document.getElementById('drawings-canvas');
+    const measureBadge = document.getElementById('measure-badge');
+    const actionBanner = document.getElementById('action-banner');
+    const ctx = measureCanvas ? measureCanvas.getContext('2d') : null;
+    const drawingsCtx = drawingsCanvas ? drawingsCanvas.getContext('2d') : null;
+
+    const btnMeasure = document.getElementById('btn-measure');
+    const btnAutoSR = document.getElementById('btn-auto-sr');
+    const btnAddSupport = document.getElementById('btn-add-support');
+    const btnAddResistance = document.getElementById('btn-add-resistance');
+    const btnClearSR = document.getElementById('btn-clear-sr');
+
+    const btnReplay = document.getElementById('btn-replay');
+    const replayToolbar = document.getElementById('replay-toolbar');
+    const btnReplayPlay = document.getElementById('btn-replay-play');
+    const replayPlayIcon = document.getElementById('replay-play-icon');
+    const replayPlayLabel = document.getElementById('replay-play-label');
+    const btnReplayNext = document.getElementById('btn-replay-next');
+    const btnReplayPrev = document.getElementById('btn-replay-prev');
+    const btnReplayCutAgain = document.getElementById('btn-replay-cut-again');
+    const btnReplayExit = document.getElementById('btn-replay-exit');
+    const replaySpeedSelect = document.getElementById('replay-speed-select');
+    const replaySlider = document.getElementById('replay-slider');
+    const replayCounter = document.getElementById('replay-counter');
+
+    const toolCursorBtn = document.getElementById('tool-cursor');
+    const toolTrendlineBtn = document.getElementById('tool-trendline');
+    const linesFlyoutMenu = document.getElementById('tv-lines-flyout');
+    const toolLinesArrow = document.getElementById('tool-lines-arrow');
+    const tlToolbarTitle = document.getElementById('tl-toolbar-title');
+    const tlWidthBtn = document.getElementById('tl-width-btn');
+    const tlStyleBtn = document.getElementById('tl-style-btn');
+    const tlRayBtn = document.getElementById('tl-ray-btn');
+    const tlLockBtn = document.getElementById('tl-lock-btn');
+    const tlCloneBtn = document.getElementById('tl-clone-btn');
+    const tlDeleteBtn = document.getElementById('tl-delete-btn');
+
+    // ── Global State Variables ──
+    let currentSymbol = 'EURUSD';
+    let fullCandles = [];
+    let visibleCandles = [];
+    let isMeasureActive = false;
+    let measureStart = null;
+    let measureEnd = null;
+    let isDrawing = false;
+    let placingMode = null;
+    let manualLines = [];
+    let autoLines = [];
+    let isAutoSROn = false;
+    let canvasRect = null;
+
+    let isReplaying = false;
+    let isCutMode = false;
+    let isPlaying = false;
+    let replayIndex = -1;
+    let replaySpeedMs = 500;
+    let replayIntervalId = null;
+    let pendingCutX = 0;
+    let pendingCutY = 0;
+    let cutRafId = null;
+
+    let activeDrawingTool = null;
+    let trendlines = [];
+    let selectedTrendline = null;
+    let trendlinePending = null;
+    let activeDrag = null;
+    let hoverState = null;
+    let drawingActionHistory = [];
+    let drawingRedoStack = [];
+
+    // 1. Initialize TradingView Lightweight Charts
+    function getChartDimensions() {
+      const isMobile = window.innerWidth <= 520;
+      const sidebarW = isMobile ? 0 : 48;
+      const topbarH = isMobile ? 38 : 44;
+      const w = Math.max(300, Math.floor(
+        (chartWrapper && chartWrapper.clientWidth) ||
+        (container && container.clientWidth) ||
+        (window.innerWidth - sidebarW)
+      ));
+      const h = Math.max(250, Math.floor(
+        (chartWrapper && chartWrapper.clientHeight) ||
+        (container && container.clientHeight) ||
+        (window.innerHeight - topbarH)
+      ));
+      return { width: w, height: h };
+    }
+    const initDims = getChartDimensions();
+
+    let isDarkMode = true;
+    try {
+      const storedTheme = localStorage.getItem('tv_dark_mode');
+      if (storedTheme === 'false') isDarkMode = false;
+    } catch (e) {}
+
+    let chart = null;
+    let candleSeries = null;
+    let lineSeries = null;
+
+    if (typeof LightweightCharts !== 'undefined') {
+      chart = LightweightCharts.createChart(container, {
+        width: initDims.width,
+        height: initDims.height,
+        layout: {
+          background: { color: isDarkMode ? '#131722' : '#ffffff' },
+          textColor: isDarkMode ? '#9b9eb5' : '#131722',
+          fontSize: window.innerWidth <= 520 ? 11 : 12,
+        },
+        grid: {
+          vertLines: { color: isDarkMode ? '#1e222d' : '#f0f3fa' },
+          horzLines: { color: isDarkMode ? '#1e222d' : '#f0f3fa' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: isDarkMode ? '#787b86' : '#9598a1' },
+          horzLine: { color: isDarkMode ? '#787b86' : '#9598a1' },
+        },
+        rightPriceScale: {
+          borderColor: isDarkMode ? '#2a2e39' : '#e0e3eb',
+          autoScale: true,
+        },
+        timeScale: {
+          borderColor: isDarkMode ? '#2a2e39' : '#e0e3eb',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        handleScale: {
+          mouseWheel: true,
+          pinch: true,
+          axisPressedMouseMove: true,
+        },
+        handleScroll: {
+          mouseWheel: true,
+          pressedMouseMove: true,
+          horzTouchDrag: true,
+          vertTouchDrag: true,
+        },
+      });
+
+      candleSeries = chart.addCandlestickSeries({
+        upColor: '#089981',
+        downColor: '#f23645',
+        borderVisible: false,
+        wickUpColor: '#089981',
+        wickDownColor: '#f23645',
+      });
+
+      // 2. Technical Indicator Line Series
+      lineSeries = chart.addLineSeries({
+        color: '#2962ff',
+        lineWidth: 2,
+        visible: false,
+      });
+    } else {
+      console.error('TradingView LightweightCharts library failed to load.');
+      if (container) {
+        container.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#d1d4dc;text-align:center;padding:24px;background:#131722;">
+            <div style="font-size:32px;margin-bottom:12px;">📊</div>
+            <div style="font-size:18px;font-weight:700;color:#f23645;margin-bottom:8px;">Chart Engine Not Loaded</div>
+            <div style="font-size:13px;color:#9b9eb5;max-width:480px;line-height:1.6;margin-bottom:16px;">
+              Could not load the TradingView chart library from CDN. Please check your internet connection or download it locally for offline use.
+            </div>
+            <code style="background:#1e222d;border:1px solid #363a45;padding:10px 14px;border-radius:6px;color:#2962ff;font-size:12px;user-select:all;">
+              curl -sL https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js -o lightweight-charts.standalone.production.js
+            </code>
+          </div>
+        `;
+      }
+    }
+
+    // ── Theme (Dark / Light Mode) Controller ──
+    function updateThemeUI() {
+      const themeBtn = document.getElementById('tv-theme-btn');
+      const sunIcon = document.getElementById('theme-icon-sun');
+      const moonIcon = document.getElementById('theme-icon-moon');
+      const ctxThemeIcon = document.getElementById('ctx-theme-icon');
+      const ctxThemeText = document.getElementById('ctx-theme-text');
+
+      if (isDarkMode) {
+        document.body.classList.remove('theme-light');
+        document.body.classList.add('theme-dark');
+        if (sunIcon) sunIcon.style.display = 'block';
+        if (moonIcon) moonIcon.style.display = 'none';
+        if (themeBtn) themeBtn.title = 'Dark Mode: ON (Click to turn Dark Mode OFF)';
+        if (ctxThemeIcon) ctxThemeIcon.textContent = '☀️';
+        if (ctxThemeText) ctxThemeText.textContent = 'Turn Dark Mode OFF (Light)';
+      } else {
+        document.body.classList.remove('theme-dark');
+        document.body.classList.add('theme-light');
+        if (sunIcon) sunIcon.style.display = 'none';
+        if (moonIcon) moonIcon.style.display = 'block';
+        if (themeBtn) themeBtn.title = 'Dark Mode: OFF (Click to turn Dark Mode ON)';
+        if (ctxThemeIcon) ctxThemeIcon.textContent = '🌙';
+        if (ctxThemeText) ctxThemeText.textContent = 'Turn Dark Mode ON (Dark)';
+      }
+
+      if (chart) {
+        chart.applyOptions({
+          layout: {
+            background: { color: isDarkMode ? '#131722' : '#ffffff' },
+            textColor: isDarkMode ? '#9b9eb5' : '#131722',
+          },
+          grid: {
+            vertLines: { color: isDarkMode ? '#1e222d' : '#f0f3fa' },
+            horzLines: { color: isDarkMode ? '#1e222d' : '#f0f3fa' },
+          },
+          rightPriceScale: {
+            borderColor: isDarkMode ? '#2a2e39' : '#e0e3eb',
+          },
+          timeScale: {
+            borderColor: isDarkMode ? '#2a2e39' : '#e0e3eb',
+          },
+          crosshair: {
+            vertLine: { color: isDarkMode ? '#787b86' : '#9598a1' },
+            horzLine: { color: isDarkMode ? '#787b86' : '#9598a1' },
+          },
+        });
+      }
+
+      if (typeof renderDrawings === 'function') {
+        renderDrawings();
+      }
+    }
+
+    function toggleDarkMode(showToastMsg = true) {
+      isDarkMode = !isDarkMode;
+      try {
+        localStorage.setItem('tv_dark_mode', isDarkMode ? 'true' : 'false');
+      } catch (e) {}
+      updateThemeUI();
+      if (showToastMsg) {
+        showToast(isDarkMode ? '🌙 Dark Mode: ON' : '☀️ Dark Mode: OFF (Light Mode)');
+      }
+    }
+
+    // Format price according to value range
+    function formatPrice(val) {
+      if (val === null || val === undefined || isNaN(val)) return '0.00';
+      if (val < 2) return val.toFixed(4);
+      if (val < 100) return val.toFixed(3);
+      return val.toFixed(2);
+    }
+
+    // Fast O(1) date formatter with zero allocation during render
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    function formatBarDate(timestamp) {
+      const d = new Date(timestamp * 1000);
+      const mon = MONTH_NAMES[d.getUTCMonth()];
+      const day = d.getUTCDate();
+      const yr = d.getUTCFullYear();
+      const hr = String(d.getUTCHours()).padStart(2, '0');
+      const min = String(d.getUTCMinutes()).padStart(2, '0');
+      return `${mon} ${day}, ${yr} ${hr}:${min}`;
+    }
+
+    // 3. Realistic Sample Data Generator
+
+    function generateSymbolData(symbol) {
+      const data = [];
+      let basePrice = symbol === 'BTCUSDT' ? 64200.0 : symbol === 'ETHUSDT' ? 3450.0 : 1.0850;
+      const volatility = symbol === 'BTCUSDT' ? 180 : symbol === 'ETHUSDT' ? 18 : 0.0012;
+      const wickRange = symbol === 'BTCUSDT' ? 60 : symbol === 'ETHUSDT' ? 8 : 0.0006;
+      let currentTime = new Date('2023-01-01T00:00:00Z').getTime() / 1000;
+
+      for (let i = 0; i < 500; i++) {
+        const delta = (Math.random() - 0.495) * volatility;
+        const open = basePrice;
+        const close = open + delta;
+        const high = Math.max(open, close) + Math.random() * wickRange;
+        const low = Math.min(open, close) - Math.random() * wickRange;
+        basePrice = close;
+        currentTime += 3600;
+
+        data.push({
+          time: currentTime,
+          open: parseFloat(open.toFixed(basePrice < 2 ? 4 : 2)),
+          high: parseFloat(high.toFixed(basePrice < 2 ? 4 : 2)),
+          low: parseFloat(low.toFixed(basePrice < 2 ? 4 : 2)),
+          close: parseFloat(close.toFixed(basePrice < 2 ? 4 : 2)),
+          dateStr: formatBarDate(currentTime),
+        });
+      }
+      return data;
+    }
+
+    function calculateSMA(data, period) {
+      const result = [];
+      for (let i = period - 1; i < data.length; i++) {
+        let sum = 0;
+        for (let j = 0; j < period; j++) sum += data[i - j].close;
+        result.push({ time: data[i].time, value: sum / period });
+      }
+      return result;
+    }
+
+    function updateIndicator() {
+      const dataToUse = isReplaying ? fullCandles.slice(0, replayIndex + 1) : fullCandles;
+      const val = document.getElementById('indicator-select').value;
+      if (val === 'none') {
+        lineSeries.applyOptions({ visible: false });
+      } else if (val === 'ema20') {
+        lineSeries.setData(calculateSMA(dataToUse, 20));
+        lineSeries.applyOptions({ visible: true, color: '#f7931a' });
+      } else if (val === 'ema50') {
+        lineSeries.setData(calculateSMA(dataToUse, 50));
+        lineSeries.applyOptions({ visible: true, color: '#2962ff' });
+      } else if (val === 'sma200') {
+        lineSeries.setData(calculateSMA(dataToUse, 200));
+        lineSeries.applyOptions({ visible: true, color: '#9c27b0' });
+      }
+    }
+
+    // High performance incremental indicator update (O(1) - 60fps)
+    function updateIndicatorIncremental(nextBar) {
+      const val = document.getElementById('indicator-select').value;
+      if (val === 'none') return;
+
+      let period = 0;
+      if (val === 'ema20') period = 20;
+      else if (val === 'ema50') period = 50;
+      else if (val === 'sma200') period = 200;
+
+      if (period > 0 && replayIndex >= period - 1) {
+        let sum = 0;
+        for (let i = 0; i < period; i++) {
+          sum += fullCandles[replayIndex - i].close;
+        }
+        const avg = sum / period;
+        lineSeries.update({ time: nextBar.time, value: avg });
+      }
+    }
+
+    function loadSymbolData(symbol) {
+      if (isReplaying) {
+        exitReplayMode(false);
+      }
+      currentSymbol = symbol || 'EURUSD';
+      fullCandles = generateSymbolData(currentSymbol);
+      visibleCandles = [...fullCandles];
+      if (candleSeries) {
+        candleSeries.setData(visibleCandles);
+      }
+      updateIndicator();
+      if (isAutoSROn) {
+        calculateAndApplyAutoSR();
+      }
+      if (typeof loadSavedDrawings === 'function') {
+        loadSavedDrawings(currentSymbol);
+      }
+      if (window.drawingEngine?.manager) {
+        window.drawingEngine.manager.setSymbol(currentSymbol);
+      }
+      if (chart && chart.timeScale) {
+        chart.timeScale().fitContent();
+      }
+      handleLayoutResize();
+    }
+
+    const symbolSelectEl = document.getElementById('symbol-select');
+    if (symbolSelectEl) {
+      symbolSelectEl.addEventListener('change', (e) => {
+        loadSymbolData(e.target.value);
+      });
+    }
+
+    const indicatorSelectEl = document.getElementById('indicator-select');
+    if (indicatorSelectEl) {
+      indicatorSelectEl.addEventListener('change', updateIndicator);
+    }
+
+    // 4. Measure Tool & Interactive Overlay Canvases
+    function updateCanvasRect() {
+      if (measureCanvas) {
+        canvasRect = measureCanvas.getBoundingClientRect();
+      }
+    }
+
+    function resizeCanvas() {
+      measureCanvas.width = measureCanvas.offsetWidth;
+      measureCanvas.height = measureCanvas.offsetHeight;
+      if (drawingsCanvas) {
+        drawingsCanvas.width = drawingsCanvas.offsetWidth;
+        drawingsCanvas.height = drawingsCanvas.offsetHeight;
+      }
+      updateCanvasRect();
+      if (isMeasureActive) drawMeasureBox();
+      if (isCutMode) scheduleCutRender();
+      if (typeof renderDrawings === 'function') renderDrawings();
+    }
+    function handleLayoutResize() {
+      if (!chart) return;
+      const dims = getChartDimensions();
+      chart.applyOptions({ width: dims.width, height: dims.height });
+      resizeCanvas();
+    }
+    window.addEventListener('resize', handleLayoutResize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(handleLayoutResize, 100);
+      setTimeout(handleLayoutResize, 350);
+    });
+    window.addEventListener('scroll', updateCanvasRect, true);
+    window.addEventListener('load', () => {
+      handleLayoutResize();
+      if (chart && chart.timeScale) chart.timeScale().fitContent();
+    });
+
+    if (window.ResizeObserver && chartWrapper) {
+      const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const cr = entry.contentRect;
+          if (cr.width > 50 && cr.height > 50) {
+            if (chart) {
+              chart.applyOptions({
+                width: Math.floor(cr.width),
+                height: Math.floor(cr.height),
+              });
+            }
+            resizeCanvas();
+          }
+        }
+      });
+      ro.observe(chartWrapper);
+    }
+
+    handleLayoutResize();
+    requestAnimationFrame(handleLayoutResize);
+    setTimeout(handleLayoutResize, 50);
+    setTimeout(handleLayoutResize, 150);
+    setTimeout(handleLayoutResize, 400);
+
+    btnMeasure.addEventListener('click', () => {
+      if (placingMode) setPlacingMode(null);
+      if (isCutMode) setCutMode(false);
+
+      isMeasureActive = !isMeasureActive;
+      btnMeasure.classList.toggle('active', isMeasureActive);
+      measureCanvas.classList.toggle('active-tool', isMeasureActive);
+
+      if (!isMeasureActive) {
+        clearMeasure();
+      }
+    });
+
+    function clearMeasure() {
+      measureStart = null;
+      measureEnd = null;
+      isDrawing = false;
+      ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+      measureBadge.style.display = 'none';
+    }
+
+    function drawMeasureBox() {
+      ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+      if (!measureStart || !measureEnd) return;
+
+      const x = Math.min(measureStart.x, measureEnd.x);
+      const y = Math.min(measureStart.y, measureEnd.y);
+      const w = Math.abs(measureStart.x - measureEnd.x);
+      const h = Math.abs(measureStart.y - measureEnd.y);
+
+      const priceStart = candleSeries.coordinateToPrice(measureStart.y);
+      const priceEnd = candleSeries.coordinateToPrice(measureEnd.y);
+
+      if (priceStart === null || priceEnd === null) return;
+
+      const priceDiff = priceEnd - priceStart;
+      const pctDiff = (priceDiff / priceStart) * 100;
+      const isPositive = priceDiff >= 0;
+
+      const fillColor = isPositive ? 'rgba(8, 153, 129, 0.15)' : 'rgba(242, 54, 69, 0.15)';
+      const borderColor = isPositive ? '#089981' : '#f23645';
+
+      // Draw box
+      ctx.fillStyle = fillColor;
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(x, y, w, h);
+      ctx.setLineDash([]);
+
+      // Draw connecting diagonal line
+      ctx.beginPath();
+      ctx.moveTo(measureStart.x, measureStart.y);
+      ctx.lineTo(measureEnd.x, measureEnd.y);
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Update Badge
+      const sign = isPositive ? '+' : '';
+      const colorClass = isPositive ? 'pos' : 'neg';
+
+      measureBadge.innerHTML = `
+        <div>Change: <span class="${colorClass}">${sign}${formatPrice(priceDiff)} (${sign}${pctDiff.toFixed(2)}%)</span></div>
+        <div>Start: $${formatPrice(priceStart)} ➔ End: $${formatPrice(priceEnd)}</div>
+        <div style="color: #787b86; font-size: 11px; margin-top: 4px;">Click again to lock measurement</div>
+      `;
+      measureBadge.style.display = 'block';
+
+      const badgeX = Math.min(measureEnd.x + 15, measureCanvas.width - 200);
+      const badgeY = Math.min(measureEnd.y + 15, measureCanvas.height - 80);
+      measureBadge.style.left = badgeX + 'px';
+      measureBadge.style.top = badgeY + 'px';
+    }
+
+    // ── 5. BAR REPLAY / CUT (SCISSORS) TOOL ──
+    // Future candles are 100% COMPLETELY HIDDEN when cut (no transparency, no future leak!)
+    // Stepping/playing uses candleSeries.update() for 60fps ultra-smooth performance.
+
+    function scheduleCutRender() {
+      if (!cutRafId) {
+        cutRafId = requestAnimationFrame(renderCutPreview);
+      }
+    }
+
+    function renderCutPreview() {
+      cutRafId = null;
+      if (!isCutMode) return;
+
+      ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+      const logical = chart.timeScale().coordinateToLogical(pendingCutX);
+      if (logical === null || fullCandles.length === 0) return;
+
+      const idx = Math.max(0, Math.min(fullCandles.length - 2, Math.round(logical)));
+      const snapX = chart.timeScale().logicalToCoordinate(idx);
+      if (snapX === null) return;
+
+      const targetBar = fullCandles[idx];
+      if (!targetBar) return;
+      if (!targetBar.dateStr) targetBar.dateStr = formatBarDate(targetBar.time);
+
+      const w = measureCanvas.width;
+      const h = measureCanvas.height;
+
+      // 1. Soft future cut shade (Light / Highlight the future area to be cut)
+      ctx.fillStyle = 'rgba(242, 54, 69, 0.08)';
+      ctx.fillRect(snapX, 0, Math.max(0, w - snapX), h);
+
+      // 2. Vertical dashed red cut line
+      ctx.beginPath();
+      ctx.strokeStyle = '#f23645';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.moveTo(snapX, 0);
+      ctx.lineTo(snapX, h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 3. Highlight candle close price anchor dot
+      try {
+        const candleY = candleSeries.priceToCoordinate(targetBar.close);
+        if (candleY !== null && !isNaN(candleY)) {
+          ctx.beginPath();
+          ctx.arc(snapX, candleY, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#f23645';
+          ctx.fill();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
+      } catch (err) {}
+
+      // 4. Floating scissors cut tag
+      const tagText = `✂️ Cut here: Bar #${idx + 1} (${targetBar.dateStr}) - Close: $${formatPrice(targetBar.close)}`;
+      ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, sans-serif';
+      const tw = ctx.measureText(tagText).width + 20;
+      const tagX = Math.max(10, Math.min(snapX - tw / 2, w - tw - 10));
+      const tagY = 16;
+
+      ctx.fillStyle = '#f23645';
+      if (ctx.roundRect) {
+        ctx.roundRect(tagX, tagY, tw, 26, 5);
+      } else {
+        ctx.rect(tagX, tagY, tw, 26);
+      }
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tagText, tagX + 10, tagY + 13);
+    }
+
+    function setCutMode(enable) {
+      isCutMode = enable;
+      if (isCutMode) {
+        if (isMeasureActive) {
+          isMeasureActive = false;
+          btnMeasure.classList.remove('active');
+          measureCanvas.classList.remove('active-tool');
+          clearMeasure();
+        }
+        if (placingMode) setPlacingMode(null);
+
+        btnReplay.classList.add('active');
+        container.style.cursor = 'crosshair';
+
+        // Temporarily reveal full dataset so the user can see & select any historical candle to cut
+        if (isReplaying) {
+          candleSeries.setData(fullCandles);
+          updateIndicator();
+        }
+
+        actionBanner.style.display = 'block';
+        actionBanner.style.borderColor = '#f23645';
+        actionBanner.innerHTML = '✂️ <b>BAR CUT:</b> Click ANY candle to cut. Pan & zoom freely! (Esc to cancel)';
+      } else {
+        btnReplay.classList.toggle('active', isReplaying);
+        actionBanner.style.display = 'none';
+        container.style.cursor = '';
+
+        if (cutRafId) {
+          cancelAnimationFrame(cutRafId);
+          cutRafId = null;
+        }
+
+        ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+
+        // If cut mode was cancelled while replaying, restore the current replayed subset
+        if (isReplaying) {
+          visibleCandles = fullCandles.slice(0, replayIndex + 1);
+          candleSeries.setData(visibleCandles);
+          updateIndicator();
+        }
+      }
+    }
+
+    // Apply Cut at specified candle index
+    // Strict requirement: HIDE ALL FUTURE CANDLES COMPLETELY!
+    function applyCut(cutIndex) {
+      if (fullCandles.length === 0) return;
+      replayIndex = Math.max(0, Math.min(fullCandles.length - 2, cutIndex));
+      isReplaying = true;
+      pauseReplay();
+
+      // Slice dataset: Future bars are completely gone from the series
+      visibleCandles = fullCandles.slice(0, replayIndex + 1);
+      candleSeries.setData(visibleCandles);
+
+      // Synchronize indicators up to cutIndex
+      updateIndicator();
+
+      // Recalculate Auto S/R on visible data only (prevent future peek)
+      if (isAutoSROn) {
+        calculateAndApplyAutoSR(visibleCandles);
+      }
+
+      // Show Replay Floating Toolbar
+      replayToolbar.style.display = 'flex';
+      btnReplay.classList.add('active');
+
+      // Update Slider and Counter
+      replaySlider.max = fullCandles.length;
+      replaySlider.value = replayIndex + 1;
+      updateReplayUIProgress();
+
+      // Scroll smoothly to end of visible candles
+      chart.timeScale().scrollToPosition(0, false);
+
+      const targetBar = fullCandles[replayIndex];
+      const dateStr = targetBar.dateStr || formatBarDate(targetBar.time);
+      showToast(`✂️ Chart Cut at Bar #${replayIndex + 1} (${dateStr}). Future 100% hidden!`);
+    }
+
+    // Next Bar: Incremental O(1) draw - 100% smooth, zero lag
+    function stepForward() {
+      if (!isReplaying) return;
+      if (replayIndex >= fullCandles.length - 1) {
+        pauseReplay();
+        showToast('🏁 Replay reached the latest bar');
+        return;
+      }
+
+      replayIndex++;
+      const nextBar = fullCandles[replayIndex];
+
+      // Ultra-smooth native canvas incremental append
+      candleSeries.update(nextBar);
+
+      // Ultra-smooth incremental indicator update
+      updateIndicatorIncremental(nextBar);
+
+      // Check active drawing alerts
+      if (window.drawingEngine?.manager) {
+        const triggered = window.drawingEngine.manager.checkAlerts(nextBar);
+        triggered.forEach(a => {
+          showToast(`🔔 ALERT: ${a.message}`);
+          if (a.notifySound) {
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              const osc = ctx.createOscillator();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(880, ctx.currentTime);
+              osc.connect(ctx.destination);
+              osc.start();
+              osc.stop(ctx.currentTime + 0.2);
+            } catch (e) {}
+          }
+        });
+      }
+
+      // Update scrubber progress UI
+      updateReplayUIProgress();
+    }
+
+    // Previous Bar (Rewind 1 bar)
+    function stepBackward() {
+      if (!isReplaying || replayIndex <= 5) return;
+      replayIndex--;
+      visibleCandles = fullCandles.slice(0, replayIndex + 1);
+      candleSeries.setData(visibleCandles);
+      updateIndicator();
+      updateReplayUIProgress();
+    }
+
+    function updateReplayUIProgress() {
+      replaySlider.value = replayIndex + 1;
+      replayCounter.textContent = `Bar: ${replayIndex + 1}/${fullCandles.length}`;
+    }
+
+    function togglePlayReplay() {
+      if (!isReplaying) return;
+      if (isPlaying) {
+        pauseReplay();
+      } else {
+        startPlay();
+      }
+    }
+
+    function startPlay() {
+      if (replayIndex >= fullCandles.length - 1) {
+        // Rewind slightly to continue or loop
+        replayIndex = Math.max(0, fullCandles.length - 60);
+        visibleCandles = fullCandles.slice(0, replayIndex + 1);
+        candleSeries.setData(visibleCandles);
+        updateIndicator();
+        updateReplayUIProgress();
+      }
+
+      isPlaying = true;
+      btnReplayPlay.classList.add('playing');
+      replayPlayIcon.textContent = '⏸';
+      replayPlayLabel.textContent = 'Pause';
+
+      if (replayIntervalId) clearInterval(replayIntervalId);
+      replayIntervalId = setInterval(() => {
+        if (!isPlaying || replayIndex >= fullCandles.length - 1) {
+          pauseReplay();
+          if (replayIndex >= fullCandles.length - 1) {
+            showToast('🏁 Replay reached the latest bar');
+          }
+          return;
+        }
+        stepForward();
+      }, replaySpeedMs);
+    }
+
+    function pauseReplay() {
+      isPlaying = false;
+      btnReplayPlay.classList.remove('playing');
+      replayPlayIcon.textContent = '▶';
+      replayPlayLabel.textContent = 'Play';
+      if (replayIntervalId) {
+        clearInterval(replayIntervalId);
+        replayIntervalId = null;
+      }
+    }
+
+    function exitReplayMode(showNotification = true) {
+      pauseReplay();
+      isReplaying = false;
+      setCutMode(false);
+      replayToolbar.style.display = 'none';
+      btnReplay.classList.remove('active');
+
+      // Restore complete historical dataset
+      visibleCandles = [...fullCandles];
+      candleSeries.setData(visibleCandles);
+      updateIndicator();
+
+      if (isAutoSROn) {
+        calculateAndApplyAutoSR(fullCandles);
+      }
+
+      chart.timeScale().fitContent();
+      if (showNotification) {
+        showToast('ℹ️ Exited Replay Mode: All candles restored');
+      }
+    }
+
+    // Replay event listeners
+    btnReplay.addEventListener('click', () => {
+      setCutMode(!isCutMode);
+    });
+
+    btnReplayCutAgain.addEventListener('click', () => {
+      setCutMode(true);
+    });
+
+    btnReplayPlay.addEventListener('click', togglePlayReplay);
+    btnReplayNext.addEventListener('click', () => {
+      pauseReplay();
+      stepForward();
+    });
+    btnReplayPrev.addEventListener('click', () => {
+      pauseReplay();
+      stepBackward();
+    });
+
+    btnReplayExit.addEventListener('click', () => {
+      exitReplayMode(true);
+    });
+
+    replaySpeedSelect.addEventListener('change', (e) => {
+      replaySpeedMs = parseInt(e.target.value);
+      if (isPlaying) {
+        startPlay();
+      }
+    });
+
+    // Scrubber drag: Instant fast scrubbing across time
+    replaySlider.addEventListener('input', (e) => {
+      if (!isReplaying) return;
+      pauseReplay();
+      const newIndex = parseInt(e.target.value) - 1;
+      if (newIndex >= 0 && newIndex < fullCandles.length && newIndex !== replayIndex) {
+        replayIndex = newIndex;
+        visibleCandles = fullCandles.slice(0, replayIndex + 1);
+        candleSeries.setData(visibleCandles);
+        updateIndicator();
+        updateReplayUIProgress();
+      }
+    });
+
+    // 6. Support & Resistance Placement
+    function drawPlacingPreview(x, y) {
+      ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+      const price = candleSeries.coordinateToPrice(y);
+      if (price !== null && !isNaN(price)) {
+        const isSup = placingMode === 'support';
+        const color = isSup ? '#089981' : '#f23645';
+        const label = isSup ? 'Support' : 'Resistance';
+
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.moveTo(0, y);
+        ctx.lineTo(measureCanvas.width, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const tagText = `${label}: $${formatPrice(price)}`;
+        ctx.font = 'bold 12px -apple-system, sans-serif';
+        const tagW = ctx.measureText(tagText).width + 16;
+        const tagH = 22;
+        const tagX = Math.min(x + 14, measureCanvas.width - tagW - 12);
+        const tagY = y - tagH / 2;
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(tagX, tagY, tagW, tagH, 4);
+        } else {
+          ctx.rect(tagX, tagY, tagW, tagH);
+        }
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(tagText, tagX + 8, y);
+      }
+    }
+
+    function setPlacingMode(mode) {
+      placingMode = mode;
+      if (placingMode) {
+        if (isMeasureActive) {
+          isMeasureActive = false;
+          btnMeasure.classList.remove('active');
+          measureCanvas.classList.remove('active-tool');
+          clearMeasure();
+        }
+        if (isCutMode) setCutMode(false);
+
+        container.style.cursor = 'crosshair';
+        btnAddSupport.classList.toggle('active', placingMode === 'support');
+        btnAddResistance.classList.toggle('active', placingMode === 'resistance');
+
+        actionBanner.style.display = 'block';
+        if (placingMode === 'support') {
+          actionBanner.style.borderColor = '#089981';
+          actionBanner.innerHTML = '🟢 Click anywhere on chart to set <b>Support Line</b> (Esc to cancel)';
+        } else {
+          actionBanner.style.borderColor = '#f23645';
+          actionBanner.innerHTML = '🔴 Click anywhere on chart to set <b>Resistance Line</b> (Esc to cancel)';
+        }
+      } else {
+        btnAddSupport.classList.remove('active');
+        btnAddResistance.classList.remove('active');
+        actionBanner.style.display = 'none';
+        container.style.cursor = '';
+
+        if (!isMeasureActive && !isCutMode) {
+          ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+        }
+      }
+    }
+
+    function addPriceLine(type, price, isAuto = false) {
+      const isSup = type === 'support';
+      const color = isSup ? '#089981' : '#f23645';
+      const title = (isAuto ? 'Auto ' : '') + (isSup ? 'Support' : 'Resistance');
+      const lineStyle = isAuto ? LightweightCharts.LineStyle.Dashed : LightweightCharts.LineStyle.Solid;
+      const roundedPrice = parseFloat(price.toFixed(price < 2 ? 4 : 2));
+
+      const lineObj = candleSeries.createPriceLine({
+        price: roundedPrice,
+        color: color,
+        lineWidth: 2,
+        lineStyle: lineStyle,
+        axisLabelVisible: true,
+        title: title,
+      });
+
+      const item = {
+        id: (isAuto ? 'auto_' : 'manual_') + Date.now() + '_' + Math.floor(Math.random() * 10000),
+        type: type,
+        price: roundedPrice,
+        isAuto: isAuto,
+        lineObj: lineObj,
+      };
+
+      if (isAuto) {
+        autoLines.push(item);
+      } else {
+        manualLines.push(item);
+      }
+
+      updateSRManagerUI();
+      return item;
+    }
+
+    window.removeSRLine = function(id) {
+      const manIdx = manualLines.findIndex(l => l.id === id);
+      if (manIdx !== -1) {
+        candleSeries.removePriceLine(manualLines[manIdx].lineObj);
+        manualLines.splice(manIdx, 1);
+        updateSRManagerUI();
+        return;
+      }
+      const autoIdx = autoLines.findIndex(l => l.id === id);
+      if (autoIdx !== -1) {
+        candleSeries.removePriceLine(autoLines[autoIdx].lineObj);
+        autoLines.splice(autoIdx, 1);
+        updateSRManagerUI();
+      }
+    };
+
+    function clearAllLines(includeAuto = true) {
+      manualLines.forEach(l => candleSeries.removePriceLine(l.lineObj));
+      manualLines = [];
+
+      if (includeAuto) {
+        autoLines.forEach(l => candleSeries.removePriceLine(l.lineObj));
+        autoLines = [];
+        isAutoSROn = false;
+        btnAutoSR.classList.remove('active');
+      }
+
+      updateSRManagerUI();
+    }
+
+    function updateSRManagerUI() {
+      const total = manualLines.length + autoLines.length;
+      const countEl = document.getElementById('sr-count');
+      if (countEl) countEl.textContent = total;
+      const listEl = document.getElementById('sr-list');
+      if (!listEl) return;
+
+      if (total === 0) {
+        listEl.innerHTML = '<div class="empty-sr">No lines placed yet. Use Auto S/R or click +Support / +Resistance.</div>';
+        return;
+      }
+
+      const combined = [...manualLines, ...autoLines];
+      combined.sort((a, b) => b.price - a.price);
+
+      let html = '';
+      combined.forEach(l => {
+        const isSup = l.type === 'support';
+        const tagClass = isSup ? 'support' : 'resistance';
+        const autoClass = l.isAuto ? 'auto' : '';
+        const label = (l.isAuto ? 'Auto ' : '') + (isSup ? 'Support' : 'Resistance');
+        const color = isSup ? '#089981' : '#f23645';
+
+        html += `
+          <div class="sr-item ${tagClass} ${autoClass}">
+            <div class="sr-item-info">
+              <span class="sr-label" style="color: ${color}">${label}</span>
+              <span class="sr-price">$${formatPrice(l.price)}</span>
+            </div>
+            <button class="sr-del" title="Delete this line" onclick="removeSRLine('${l.id}')">✕</button>
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = html;
+    }
+
+    // 7. Algorithmic Auto Support & Resistance
+    function calculateAndApplyAutoSR(candlesDataset = null) {
+      autoLines.forEach(l => candleSeries.removePriceLine(l.lineObj));
+      autoLines = [];
+
+      const data = candlesDataset || (isReplaying ? fullCandles.slice(0, replayIndex + 1) : fullCandles);
+      if (!isAutoSROn || data.length < 30) {
+        updateSRManagerUI();
+        return;
+      }
+
+      const windowSize = 10;
+      const swingHighs = [];
+      const swingLows = [];
+
+      for (let i = windowSize; i < data.length - windowSize; i++) {
+        const high = data[i].high;
+        const low = data[i].low;
+
+        let isHigh = true;
+        let isLow = true;
+
+        for (let j = 1; j <= windowSize; j++) {
+          if (data[i - j].high > high || data[i + j].high > high) isHigh = false;
+          if (data[i - j].low < low || data[i + j].low < low) isLow = false;
+          if (!isHigh && !isLow) break;
+        }
+
+        if (isHigh) swingHighs.push(high);
+        if (isLow) swingLows.push(low);
+      }
+
+      function clusterLevels(arr) {
+        if (arr.length === 0) return [];
+        const clusters = [];
+        arr.forEach(val => {
+          const existing = clusters.find(c => Math.abs(c.price - val) / c.price < 0.012);
+          if (existing) {
+            existing.count++;
+            existing.price = (existing.price * (existing.count - 1) + val) / existing.count;
+          } else {
+            clusters.push({ price: val, count: 1 });
+          }
+        });
+        clusters.sort((a, b) => b.count - a.count);
+        return clusters.slice(0, 3).map(c => c.price);
+      }
+
+      const resistLevels = clusterLevels(swingHighs);
+      const supportLevels = clusterLevels(swingLows);
+
+      resistLevels.forEach(price => addPriceLine('resistance', price, true));
+      supportLevels.forEach(price => addPriceLine('support', price, true));
+    }
+
+    // 8. Native Chart Subscriptions (144Hz Smooth, Non-blocking, Zero Lag)
+    // Both Cut Mode and S/R Placing use TradingView's native subscriptions.
+    // measureCanvas remains pointer-events: none, so chart drag, pan, zoom, and crosshair work natively!
+    if (chart) {
+      chart.subscribeCrosshairMove((param) => {
+        if (isCutMode) {
+          if (param && param.point && param.point.x >= 0 && param.point.x <= measureCanvas.width - 55) {
+            pendingCutX = param.point.x;
+            pendingCutY = param.point.y;
+            scheduleCutRender();
+          } else {
+            ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+          }
+        } else if (placingMode) {
+          if (param && param.point && param.point.y >= 0 && param.point.y <= measureCanvas.height) {
+            drawPlacingPreview(param.point.x, param.point.y);
+          } else {
+            ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+          }
+        }
+      });
+
+      chart.subscribeClick((param) => {
+        if (isCutMode) {
+          if (param && param.point && param.point.x <= measureCanvas.width - 55) {
+            const logical = chart.timeScale().coordinateToLogical(param.point.x);
+            if (logical !== null) {
+              const cutIdx = Math.max(0, Math.min(fullCandles.length - 2, Math.round(logical)));
+              applyCut(cutIdx);
+            }
+          }
+          setCutMode(false);
+        } else if (placingMode) {
+          if (param && param.point && param.point.y >= 0 && param.point.y <= measureCanvas.height) {
+            const price = candleSeries.coordinateToPrice(param.point.y);
+            if (price !== null && !isNaN(price)) {
+              addPriceLine(placingMode, price, false);
+            }
+          }
+          setPlacingMode(null);
+        }
+      });
+    }
+
+    // Measure & Trendline Placement Canvas Listeners
+    measureCanvas.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+
+      if (!canvasRect) updateCanvasRect();
+      const x = e.clientX - canvasRect.left;
+      const y = e.clientY - canvasRect.top;
+
+      if (!isMeasureActive) return;
+
+      if (!isDrawing) {
+        measureStart = { x, y };
+        measureEnd = { x, y };
+        isDrawing = true;
+      } else {
+        measureEnd = { x, y };
+        isDrawing = false;
+      }
+      drawMeasureBox();
+    });
+
+    measureCanvas.addEventListener('mousemove', (e) => {
+      if (!canvasRect) updateCanvasRect();
+      const x = e.clientX - canvasRect.left;
+      const y = e.clientY - canvasRect.top;
+
+      if (!isMeasureActive || !isDrawing) return;
+      measureEnd = { x, y };
+      drawMeasureBox();
+    });
+
+    // 9. Toast Notification Helper
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('chart-toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2200);
+    }
+
+    // 10. Context Menu
+    const contextMenu = document.getElementById('chart-context-menu');
+    const ctxDeleteLine = document.getElementById('ctx-delete-line');
+    const ctxLineSeparator = document.getElementById('ctx-line-separator');
+    const ctxDeleteLineText = document.getElementById('ctx-delete-line-text');
+    const ctxCutItem = document.getElementById('ctx-cut-item');
+    const ctxCutText = document.getElementById('ctx-cut-text');
+    const ctxExitReplayItem = document.getElementById('ctx-exit-replay-item');
+
+    let lineToDelete = null;
+    let rightClickCutIdx = -1;
+    let rectangleForContext = null;
+
+    function closeContextMenu() {
+      if (contextMenu) contextMenu.style.display = 'none';
+      const ctxDup = document.getElementById('ctx-duplicate-line');
+      const ctxLock = document.getElementById('ctx-lock-line');
+      const ctxRay = document.getElementById('ctx-ray-line');
+      const ctxSettingsRect = document.getElementById('ctx-settings-rect');
+      const ctxAlertRect = document.getElementById('ctx-alert-rect');
+      const ctxOrderFront = document.getElementById('ctx-order-front');
+      const ctxOrderBack = document.getElementById('ctx-order-back');
+
+      if (ctxDup) ctxDup.style.display = 'none';
+      if (ctxLock) ctxLock.style.display = 'none';
+      if (ctxRay) ctxRay.style.display = 'none';
+      if (ctxSettingsRect) ctxSettingsRect.style.display = 'none';
+      if (ctxAlertRect) ctxAlertRect.style.display = 'none';
+      if (ctxOrderFront) ctxOrderFront.style.display = 'none';
+      if (ctxOrderBack) ctxOrderBack.style.display = 'none';
+
+      lineToDelete = null;
+      trendlineToDelete = null;
+      rectangleForContext = null;
+      rightClickCutIdx = -1;
+    }
+
+    function cleanChartOnly() {
+      try {
+        const indSelect = document.getElementById('indicator-select');
+        if (indSelect) indSelect.value = 'none';
+        updateIndicator();
+
+        clearAllLines(true);
+        clearMeasure();
+        if (isMeasureActive) {
+          isMeasureActive = false;
+          btnMeasure.classList.remove('active');
+          measureCanvas.classList.remove('active-tool');
+        }
+        if (placingMode) setPlacingMode(null);
+        if (isCutMode) setCutMode(false);
+        trendlines = [];
+        if (typeof saveCurrentDrawings === 'function') saveCurrentDrawings();
+        deselectTrendline();
+        if (typeof renderDrawings === 'function') renderDrawings();
+        if (window.drawingEngine?.manager) {
+          window.drawingEngine.manager.drawings = [];
+          window.drawingEngine.manager.save();
+          window.drawingEngine.manager.deselectDrawing();
+          window.drawingEngine.manager.requestRender();
+        }
+
+        if (chart && chart.timeScale) {
+          chart.timeScale().fitContent();
+        }
+        showToast('✨ Cleaned chart: Candlesticks only');
+      } catch (err) {
+        console.error('Error cleaning chart:', err);
+      } finally {
+        closeContextMenu();
+      }
+    }
+
+    function removeIndicators() {
+      try {
+        const indSelect = document.getElementById('indicator-select');
+        if (indSelect) indSelect.value = 'none';
+        updateIndicator();
+        showToast('📈 Indicators removed');
+      } finally {
+        closeContextMenu();
+      }
+    }
+
+    function clearAllSR() {
+      try {
+        clearAllLines(true);
+        showToast('📐 S/R lines removed');
+      } finally {
+        closeContextMenu();
+      }
+    }
+
+    function clearMeasureTool() {
+      try {
+        clearMeasure();
+        if (isMeasureActive) {
+          isMeasureActive = false;
+          btnMeasure.classList.remove('active');
+          measureCanvas.classList.remove('active-tool');
+        }
+        showToast('📏 Measurements cleared');
+      } finally {
+        closeContextMenu();
+      }
+    }
+
+    function resetChartView() {
+      try {
+        if (chart && chart.timeScale) {
+          chart.timeScale().fitContent();
+        }
+        showToast('🔄 Chart view reset');
+      } finally {
+        closeContextMenu();
+      }
+    }
+
+    let trendlineToDelete = null;
+
+    function getDrawingDisplayName(d) {
+      if (!d) return 'Drawing';
+      switch (d.type) {
+        case 'trendline': return 'Trendline';
+        case 'ray': return 'Ray';
+        case 'infoLine': return 'Info line';
+        case 'extendedLine': return 'Extended line';
+        case 'trendAngle': return 'Trend angle';
+        case 'horizontalLine': return 'Horizontal line';
+        case 'horizontalRay': return 'Horizontal ray';
+        case 'verticalLine': return 'Vertical line';
+        case 'crossline': return 'Crossline';
+        case 'brush': return 'Brush';
+        case 'path': return 'Path';
+        case 'priceRange': return 'Price Range';
+        case 'rotatedRectangle': return 'Rotated Rectangle';
+        case 'ellipse': return 'Ellipse';
+        case 'rectangle': return 'Rectangle';
+        default: return 'Drawing';
+      }
+    }
+
+    function deleteTargetLine() {
+      try {
+        if (rectangleForContext && window.drawingEngine?.manager) {
+          const typeName = getDrawingDisplayName(rectangleForContext);
+          window.drawingEngine.manager.removeDrawing(rectangleForContext.id, true);
+          showToast(`🗑️ Removed ${typeName}`);
+          rectangleForContext = null;
+          return;
+        }
+        if (trendlineToDelete) {
+          const idx = trendlines.findIndex(t => t.id === trendlineToDelete.id);
+          if (idx !== -1) {
+            const removed = trendlines.splice(idx, 1)[0];
+            if (typeof recordAction === 'function') recordAction({ type: 'delete_trendline', item: removed });
+            if (typeof saveCurrentDrawings === 'function') saveCurrentDrawings();
+            showToast(`🗑️ Removed ${removed.type === 'ray' ? 'Ray' : 'Trendline'}`);
+          }
+          if (selectedTrendline && selectedTrendline.id === trendlineToDelete.id) {
+            deselectTrendline();
+          }
+          if (typeof renderDrawings === 'function') renderDrawings();
+          trendlineToDelete = null;
+          return;
+        }
+        if (lineToDelete) {
+          const typeName = lineToDelete.type === 'support' ? 'Support' : 'Resistance';
+          const priceStr = formatPrice(lineToDelete.price);
+          removeSRLine(lineToDelete.id);
+          showToast(`🗑️ Removed ${typeName} line ($${priceStr})`);
+          lineToDelete = null;
+        }
+      } finally {
+        closeContextMenu();
+      }
+    }
+
+    contextMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const item = e.target.closest('.ctx-item');
+      if (!item) return;
+      const action = item.getAttribute('data-action');
+      if (!action) return;
+
+      switch (action) {
+        case 'cut-here':
+          if (rightClickCutIdx >= 0) {
+            applyCut(rightClickCutIdx);
+          } else {
+            setCutMode(true);
+          }
+          closeContextMenu();
+          break;
+        case 'exit-replay':
+          exitReplayMode(true);
+          closeContextMenu();
+          break;
+        case 'delete-line':
+          deleteTargetLine();
+          break;
+        case 'duplicate-line': {
+          if (rectangleForContext && window.drawingEngine?.manager) {
+            const typeName = getDrawingDisplayName(rectangleForContext);
+            window.drawingEngine.manager.cloneDrawing(rectangleForContext);
+            showToast(`📋 Duplicated ${typeName}`);
+            closeContextMenu();
+            break;
+          }
+          const target = trendlineToDelete || selectedTrendline;
+          if (target && typeof duplicateDrawing === 'function') {
+            duplicateDrawing(target);
+          }
+          closeContextMenu();
+          break;
+        }
+        case 'lock-line': {
+          if (rectangleForContext && window.drawingEngine?.manager) {
+            const typeName = getDrawingDisplayName(rectangleForContext);
+            window.drawingEngine.manager.lockDrawing(rectangleForContext);
+            showToast(rectangleForContext.locked ? `🔒 ${typeName} locked` : `🔓 ${typeName} unlocked`);
+            closeContextMenu();
+            break;
+          }
+          const target = trendlineToDelete || selectedTrendline;
+          if (target) {
+            target.locked = !target.locked;
+            if (typeof saveCurrentDrawings === 'function') saveCurrentDrawings();
+            if (typeof updateTrendlineToolbarUI === 'function') updateTrendlineToolbarUI();
+            if (typeof renderDrawings === 'function') renderDrawings();
+            showToast(target.locked ? '🔒 Drawing locked' : '🔓 Drawing unlocked');
+          }
+          closeContextMenu();
+          break;
+        }
+        case 'settings-rect': {
+          const rect = rectangleForContext || window.drawingEngine?.manager?.selectedDrawing;
+          if (rect && window.drawingEngine?.settingsDialog) {
+            window.drawingEngine.settingsDialog.open(rect);
+          }
+          closeContextMenu();
+          break;
+        }
+        case 'alert-rect': {
+          const rect = rectangleForContext || window.drawingEngine?.manager?.selectedDrawing;
+          if (rect && window.drawingEngine?.alertDialog) {
+            window.drawingEngine.alertDialog.open(rect);
+          }
+          closeContextMenu();
+          break;
+        }
+        case 'order-front': {
+          const rect = rectangleForContext || window.drawingEngine?.manager?.selectedDrawing;
+          if (rect && window.drawingEngine?.manager) {
+            window.drawingEngine.manager.bringToFront(rect);
+            showToast('⬆️ Brought to front');
+          }
+          closeContextMenu();
+          break;
+        }
+        case 'order-back': {
+          const rect = rectangleForContext || window.drawingEngine?.manager?.selectedDrawing;
+          if (rect && window.drawingEngine?.manager) {
+            window.drawingEngine.manager.sendToBack(rect);
+            showToast('⬇️ Sent to back');
+          }
+          closeContextMenu();
+          break;
+        }
+        case 'toggle-ray': {
+          const target = trendlineToDelete || selectedTrendline;
+          if (target) {
+            target.extendRight = !target.extendRight;
+            target.type = target.extendRight ? 'ray' : 'trendline';
+            if (typeof saveCurrentDrawings === 'function') saveCurrentDrawings();
+            if (typeof updateTrendlineToolbarUI === 'function') updateTrendlineToolbarUI();
+            if (typeof renderDrawings === 'function') renderDrawings();
+            showToast(target.extendRight ? '➡️ Extended Right (Ray)' : '📏 Ray disabled (Trendline segment)');
+          }
+          closeContextMenu();
+          break;
+        }
+        case 'clean-chart':
+          cleanChartOnly();
+          break;
+        case 'remove-indicators':
+          removeIndicators();
+          break;
+        case 'clear-sr':
+          clearAllSR();
+          break;
+        case 'clear-measure':
+          clearMeasureTool();
+          break;
+        case 'toggle-theme':
+          toggleDarkMode(true);
+          closeContextMenu();
+          break;
+        case 'reset-chart':
+          resetChartView();
+          break;
+      }
+    });
+
+    contextMenu.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+
+    function openContextMenu(e) {
+      if (placingMode) setPlacingMode(null);
+      if (isCutMode) setCutMode(false);
+
+      const rect = chartWrapper.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      // Check Trendline & Ray detection
+      trendlineToDelete = null;
+      if (typeof pointToSegmentDistance === 'function') {
+        for (const tl of trendlines) {
+          if (tl.hidden) continue;
+          const c1 = getPointScreenCoords(tl.p1);
+          const c2 = getPointScreenCoords(tl.p2);
+          if (c1 && c2) {
+            const isRay = tl.type === 'ray' || !!tl.extendRight;
+            const coords = typeof getRayExtendedCoords === 'function'
+              ? getRayExtendedCoords(c1, c2, drawingsCanvas.width, drawingsCanvas.height, isRay, !!tl.extendLeft)
+              : { start: c1, end: c2 };
+            const dist = pointToSegmentDistance(clickX, clickY, coords.start.x, coords.start.y, coords.end.x, coords.end.y);
+            if (dist <= 10) {
+              trendlineToDelete = tl;
+              selectTrendline(tl);
+              break;
+            }
+          }
+        }
+      }
+
+      // Smart S/R Line detection
+      const allLines = [...manualLines, ...autoLines];
+      lineToDelete = null;
+
+      for (const item of allLines) {
+        try {
+          const lineY = candleSeries.priceToCoordinate(item.price);
+          if (lineY !== null && Math.abs(lineY - clickY) <= 16) {
+            lineToDelete = item;
+            break;
+          }
+        } catch (err) {}
+      }
+
+      const ctxDup = document.getElementById('ctx-duplicate-line');
+      const ctxLock = document.getElementById('ctx-lock-line');
+      const ctxLockI = document.getElementById('ctx-lock-icon');
+      const ctxLockT = document.getElementById('ctx-lock-text');
+      const ctxRay = document.getElementById('ctx-ray-line');
+      const ctxRayT = document.getElementById('ctx-ray-text');
+      const ctxSettingsRect = document.getElementById('ctx-settings-rect');
+      const ctxAlertRect = document.getElementById('ctx-alert-rect');
+      const ctxOrderFront = document.getElementById('ctx-order-front');
+      const ctxOrderBack = document.getElementById('ctx-order-back');
+
+      // Check Rectangle detection
+      rectangleForContext = null;
+      if (window.drawingEngine?.manager) {
+        const helper = window.drawingEngine.primitive?._coordHelper;
+        if (helper) {
+          const rects = [...window.drawingEngine.manager.getDrawings()].sort((a, b) => (b.zIndex || 1) - (a.zIndex || 1));
+          for (const d of rects) {
+            if (!d.isVisibleOnTimeframe(window.drawingEngine.manager.currentTimeframe)) continue;
+            const res = d.hitTest(clickX, clickY, helper);
+            if (res.hit) {
+              rectangleForContext = d;
+              window.drawingEngine.manager.selectDrawing(d);
+              break;
+            }
+          }
+        }
+      }
+
+      if (rectangleForContext) {
+        ctxDeleteLine.style.display = 'flex';
+        ctxLineSeparator.style.display = 'block';
+        const typeTitle = getDrawingDisplayName(rectangleForContext);
+        ctxDeleteLineText.textContent = `Delete ${typeTitle}`;
+        if (ctxDup) ctxDup.style.display = 'flex';
+        if (ctxLock) {
+          ctxLock.style.display = 'flex';
+          if (ctxLockI) ctxLockI.textContent = rectangleForContext.locked ? '🔓' : '🔒';
+          if (ctxLockT) ctxLockT.textContent = rectangleForContext.locked ? 'Unlock Drawing' : 'Lock Drawing';
+        }
+        if (ctxRay) ctxRay.style.display = 'none';
+        if (ctxSettingsRect) ctxSettingsRect.style.display = 'flex';
+        if (ctxAlertRect) {
+          const hasAlert = ['trendline', 'ray', 'infoLine', 'extendedLine', 'trendAngle', 'horizontalLine', 'horizontalRay', 'verticalLine', 'crossline', 'rectangle'].includes(rectangleForContext.type);
+          ctxAlertRect.style.display = hasAlert ? 'flex' : 'none';
+          const alertTextSpan = ctxAlertRect.querySelector('span:last-child');
+          if (alertTextSpan) {
+            alertTextSpan.textContent = `Create Alert on ${typeTitle}...`;
+          }
+        }
+        if (ctxOrderFront) ctxOrderFront.style.display = 'flex';
+        if (ctxOrderBack) ctxOrderBack.style.display = 'flex';
+      } else if (trendlineToDelete) {
+        ctxDeleteLine.style.display = 'flex';
+        ctxLineSeparator.style.display = 'block';
+        ctxDeleteLineText.textContent = `Delete ${trendlineToDelete.type === 'ray' ? 'Ray' : 'Trendline'}`;
+        if (ctxDup) ctxDup.style.display = 'flex';
+        if (ctxLock) {
+          ctxLock.style.display = 'flex';
+          if (ctxLockI) ctxLockI.textContent = trendlineToDelete.locked ? '🔓' : '🔒';
+          if (ctxLockT) ctxLockT.textContent = trendlineToDelete.locked ? 'Unlock Drawing' : 'Lock Drawing';
+        }
+        if (ctxRay) {
+          ctxRay.style.display = 'flex';
+          if (ctxRayT) ctxRayT.textContent = (trendlineToDelete.type === 'ray' || trendlineToDelete.extendRight) ? 'Disable Ray (Segment)' : 'Extend Right (Ray)';
+        }
+        if (ctxSettingsRect) ctxSettingsRect.style.display = 'none';
+        if (ctxAlertRect) ctxAlertRect.style.display = 'none';
+        if (ctxOrderFront) ctxOrderFront.style.display = 'none';
+        if (ctxOrderBack) ctxOrderBack.style.display = 'none';
+      } else if (lineToDelete) {
+        ctxDeleteLine.style.display = 'flex';
+        ctxLineSeparator.style.display = 'block';
+        const typeName = lineToDelete.type === 'support' ? 'Support' : 'Resistance';
+        ctxDeleteLineText.textContent = `Delete ${lineToDelete.isAuto ? 'Auto ' : ''}${typeName} ($${formatPrice(lineToDelete.price)})`;
+        if (ctxDup) ctxDup.style.display = 'none';
+        if (ctxLock) ctxLock.style.display = 'none';
+        if (ctxRay) ctxRay.style.display = 'none';
+        if (ctxSettingsRect) ctxSettingsRect.style.display = 'none';
+        if (ctxAlertRect) ctxAlertRect.style.display = 'none';
+        if (ctxOrderFront) ctxOrderFront.style.display = 'none';
+        if (ctxOrderBack) ctxOrderBack.style.display = 'none';
+      } else {
+        ctxDeleteLine.style.display = 'none';
+        ctxLineSeparator.style.display = 'none';
+        if (ctxDup) ctxDup.style.display = 'none';
+        if (ctxLock) ctxLock.style.display = 'none';
+        if (ctxRay) ctxRay.style.display = 'none';
+        if (ctxSettingsRect) ctxSettingsRect.style.display = 'none';
+        if (ctxAlertRect) ctxAlertRect.style.display = 'none';
+        if (ctxOrderFront) ctxOrderFront.style.display = 'none';
+        if (ctxOrderBack) ctxOrderBack.style.display = 'none';
+      }
+
+      // Bar Replay Cut at this bar
+      const logical = chart.timeScale().coordinateToLogical(clickX);
+      if (logical !== null && fullCandles.length > 0) {
+        rightClickCutIdx = Math.max(0, Math.min(fullCandles.length - 2, Math.round(logical)));
+        ctxCutText.innerHTML = `<b>Cut / Replay Here</b> (Bar #${rightClickCutIdx + 1})`;
+      } else {
+        rightClickCutIdx = -1;
+        ctxCutText.innerHTML = `<b>Cut / Bar Replay</b>`;
+      }
+
+      ctxExitReplayItem.style.display = isReplaying ? 'flex' : 'none';
+
+      contextMenu.style.display = 'block';
+      const menuW = contextMenu.offsetWidth || 230;
+      const menuH = contextMenu.offsetHeight || 260;
+      let left = e.clientX;
+      let top = e.clientY;
+
+      if (left + menuW > window.innerWidth - 12) left = window.innerWidth - menuW - 12;
+      if (top + menuH > window.innerHeight - 12) top = window.innerHeight - menuH - 12;
+
+      contextMenu.style.left = `${left}px`;
+      contextMenu.style.top = `${top}px`;
+    }
+
+    document.addEventListener('contextmenu', (e) => {
+      const inChart = chartWrapper.contains(e.target) || e.target === chartWrapper;
+      if (inChart) {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu(e);
+      }
+    }, true);
+
+    window.addEventListener('mousedown', (e) => {
+      if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
+        closeContextMenu();
+      }
+    });
+
+    window.addEventListener('resize', closeContextMenu);
+    if (chart && chart.timeScale) {
+      chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+        closeContextMenu();
+        if (isCutMode) scheduleCutRender();
+        if (typeof renderDrawings === 'function') renderDrawings();
+      });
+    }
+
+    // 11. Toolbar Button Bindings
+    const btnClean = document.getElementById('btn-clean-chart');
+    if (btnClean) btnClean.addEventListener('click', cleanChartOnly);
+
+    btnAddSupport.addEventListener('click', () => {
+      setPlacingMode(placingMode === 'support' ? null : 'support');
+    });
+
+    btnAddResistance.addEventListener('click', () => {
+      setPlacingMode(placingMode === 'resistance' ? null : 'resistance');
+    });
+
+    btnAutoSR.addEventListener('click', () => {
+      isAutoSROn = !isAutoSROn;
+      btnAutoSR.classList.toggle('active', isAutoSROn);
+      calculateAndApplyAutoSR();
+    });
+
+    btnClearSR.addEventListener('click', () => {
+      clearAllSR();
+    });
+
+    const srToggleBtn = document.getElementById('sr-panel-toggle');
+    const srListContainer = document.getElementById('sr-list-container');
+    let isSRPanelCollapsed = false;
+    if (srToggleBtn && srListContainer) {
+      // Auto-collapse S/R manager on mobile devices to save maximum screen space
+      if (window.innerWidth <= 520) {
+        isSRPanelCollapsed = true;
+        srListContainer.style.display = 'none';
+        srToggleBtn.textContent = '▸';
+      }
+      srToggleBtn.addEventListener('click', () => {
+        isSRPanelCollapsed = !isSRPanelCollapsed;
+        srListContainer.style.display = isSRPanelCollapsed ? 'none' : 'block';
+        srToggleBtn.textContent = isSRPanelCollapsed ? '▸' : '▾';
+      });
+    }
+
+    // ── Mobile Drawing Tools Drawer Wiring ──
+    const mobileToolsBtn = document.getElementById('mobile-tools-btn');
+    const mobileBackdrop = document.getElementById('mobile-tools-backdrop');
+    const leftSidebar = document.getElementById('tv-left-sidebar');
+
+    if (mobileToolsBtn && leftSidebar) {
+      mobileToolsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = leftSidebar.classList.toggle('mobile-open');
+        if (mobileBackdrop) mobileBackdrop.classList.toggle('active', isOpen);
+      });
+
+      if (mobileBackdrop) {
+        mobileBackdrop.addEventListener('click', () => {
+          leftSidebar.classList.remove('mobile-open');
+          mobileBackdrop.classList.remove('active');
+        });
+      }
+
+      leftSidebar.querySelectorAll('.tv-left-btn, .tv-flyout-item').forEach(el => {
+        el.addEventListener('click', () => {
+          if (window.innerWidth <= 520) {
+            setTimeout(() => {
+              leftSidebar.classList.remove('mobile-open');
+              if (mobileBackdrop) mobileBackdrop.classList.remove('active');
+            }, 120);
+          }
+        });
+      });
+    }
+
+    // ── TradingView Navbar Interactive Wiring ──
+    const symbolPill = document.getElementById('tv-symbol-pill');
+    const symbolMenu = document.getElementById('tv-symbol-menu');
+    const symbolText = document.getElementById('tv-symbol-text');
+    const symbolSelect = document.getElementById('symbol-select');
+    const indicatorSelect = document.getElementById('indicator-select');
+
+    const indicatorsBtn = document.getElementById('tv-indicators-btn');
+    const indicatorsMenu = document.getElementById('tv-indicators-menu');
+    const timeframeBtn = document.getElementById('tv-timeframe-btn');
+    const timeframeMenu = document.getElementById('tv-timeframe-menu');
+    const timeframeText = document.getElementById('tv-timeframe-text');
+    const workspaceBtn = document.getElementById('tv-workspace-btn');
+    const workspaceMenu = document.getElementById('tv-workspace-menu');
+
+    function closeAllTvMenus() {
+      if (symbolMenu) symbolMenu.style.display = 'none';
+      if (indicatorsMenu) indicatorsMenu.style.display = 'none';
+      if (timeframeMenu) timeframeMenu.style.display = 'none';
+      if (workspaceMenu) workspaceMenu.style.display = 'none';
+      const flyout = document.getElementById('tv-lines-flyout');
+      if (flyout) flyout.style.display = 'none';
+      const shapesFlyout = document.getElementById('tv-shapes-flyout');
+      if (shapesFlyout) shapesFlyout.style.display = 'none';
+      const rangeFlyout = document.getElementById('tv-range-flyout');
+      if (rangeFlyout) rangeFlyout.style.display = 'none';
+    }
+
+    // Toggle Symbol Menu
+    if (symbolPill && symbolMenu) {
+      symbolPill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = symbolMenu.style.display === 'block';
+        closeAllTvMenus();
+        if (!isOpen) symbolMenu.style.display = 'block';
+      });
+
+      symbolMenu.querySelectorAll('.tv-menu-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const sym = item.getAttribute('data-symbol');
+          if (sym) {
+            symbolText.textContent = sym;
+            symbolMenu.querySelectorAll('.tv-menu-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            if (symbolSelect) symbolSelect.value = sym;
+            loadSymbolData(sym);
+            showToast(`📈 Symbol changed to ${sym}`);
+          }
+          closeAllTvMenus();
+        });
+      });
+    }
+
+    // Toggle Timeframe Menu
+    if (timeframeBtn && timeframeMenu) {
+      timeframeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = timeframeMenu.style.display === 'block';
+        closeAllTvMenus();
+        if (!isOpen) timeframeMenu.style.display = 'block';
+      });
+
+      timeframeMenu.querySelectorAll('.tv-menu-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const tf = item.getAttribute('data-tf');
+          if (tf) {
+            timeframeText.textContent = tf;
+            timeframeMenu.querySelectorAll('.tv-menu-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            if (window.drawingEngine?.manager) {
+              window.drawingEngine.manager.setTimeframe(tf);
+            }
+            showToast(`⏱️ Timeframe set to ${tf}`);
+          }
+          closeAllTvMenus();
+        });
+      });
+    }
+
+    // Toggle Indicators Menu
+    if (indicatorsBtn && indicatorsMenu) {
+      indicatorsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = indicatorsMenu.style.display === 'block';
+        closeAllTvMenus();
+        if (!isOpen) indicatorsMenu.style.display = 'block';
+      });
+
+      indicatorsMenu.querySelectorAll('.tv-menu-item[data-indicator]').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const ind = item.getAttribute('data-indicator');
+          if (ind) {
+            if (indicatorSelect) indicatorSelect.value = ind;
+            updateIndicator();
+            indicatorsMenu.querySelectorAll('.tv-menu-item[data-indicator]').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            showToast(`📊 Indicator: ${item.textContent.trim()}`);
+          }
+          closeAllTvMenus();
+        });
+      });
+    }
+
+    // Toggle Workspace Menu
+    if (workspaceBtn && workspaceMenu) {
+      workspaceBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = workspaceMenu.style.display === 'block';
+        closeAllTvMenus();
+        if (!isOpen) workspaceMenu.style.display = 'block';
+      });
+
+      const resetViewBtn = document.getElementById('menu-reset-view');
+      if (resetViewBtn) {
+        resetViewBtn.addEventListener('click', () => {
+          if (chart && chart.timeScale) chart.timeScale().fitContent();
+          showToast('🔄 Chart view reset');
+          closeAllTvMenus();
+        });
+      }
+
+      const saveLayoutBtn = document.getElementById('menu-save-layout');
+      if (saveLayoutBtn) {
+        saveLayoutBtn.addEventListener('click', () => {
+          showToast('💾 Layout saved successfully');
+          closeAllTvMenus();
+        });
+      }
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.tv-dropdown-anchor') && !e.target.closest('.tv-tool-group')) {
+        closeAllTvMenus();
+      }
+    });
+
+    // Undo / Redo
+    let deletedLinesHistory = [];
+    const btnUndo = document.getElementById('btn-undo');
+    const btnRedo = document.getElementById('btn-redo');
+
+    if (btnUndo) {
+      btnUndo.addEventListener('click', () => {
+        if (window.drawingEngine?.manager?.history?.canUndo()) {
+          window.drawingEngine.manager.undo();
+          showToast('↺ Undid Rectangle action');
+          return;
+        }
+        if (typeof performDrawingUndo === 'function' && performDrawingUndo()) return;
+        if (manualLines.length > 0) {
+          const lastLine = manualLines.pop();
+          candleSeries.removePriceLine(lastLine.lineObj);
+          deletedLinesHistory.push(lastLine);
+          updateSRManagerUI();
+          showToast(`↺ Undid ${lastLine.type} line ($${formatPrice(lastLine.price)})`);
+        } else if (isMeasureActive) {
+          clearMeasure();
+          showToast('↺ Cleared measurement');
+        } else {
+          showToast('ℹ️ Nothing to undo');
+        }
+      });
+    }
+
+    if (btnRedo) {
+      btnRedo.addEventListener('click', () => {
+        if (window.drawingEngine?.manager?.history?.canRedo()) {
+          window.drawingEngine.manager.redo();
+          showToast('↻ Redid Rectangle action');
+          return;
+        }
+        if (typeof performDrawingRedo === 'function' && performDrawingRedo()) return;
+        if (deletedLinesHistory.length > 0) {
+          const restored = deletedLinesHistory.pop();
+          addPriceLine(restored.type, restored.price, restored.isAuto);
+          showToast(`↻ Restored ${restored.type} line`);
+        } else {
+          showToast('ℹ️ Nothing to redo');
+        }
+      });
+    }
+
+    // Dark / Light Theme Toggle Button
+    const btnTheme = document.getElementById('tv-theme-btn');
+    if (btnTheme) {
+      btnTheme.addEventListener('click', () => {
+        toggleDarkMode(true);
+      });
+    }
+
+    // Fullscreen Toggle
+    const btnFullscreen = document.getElementById('tv-fullscreen-btn');
+    if (btnFullscreen) {
+      btnFullscreen.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+          showToast('⛶ Fullscreen mode enabled');
+        } else {
+          document.exitFullscreen().catch(() => {});
+          showToast('⛶ Exited fullscreen mode');
+        }
+      });
+    }
+
+    // Camera Snapshot
+    const btnCamera = document.getElementById('tv-camera-btn');
+    if (btnCamera) {
+      btnCamera.addEventListener('click', () => {
+        showToast('📸 Chart snapshot captured!');
+      });
+    }
+
+    // Alert Button
+    const btnAlert = document.getElementById('tv-alert-btn');
+    if (btnAlert) {
+      btnAlert.addEventListener('click', () => {
+        const lastCandle = fullCandles[replayIndex >= 0 ? replayIndex : fullCandles.length - 1];
+        showToast(`⏰ Alert set for ${symbolText ? symbolText.textContent : 'EURUSD'} @ $${formatPrice(lastCandle.close)}`);
+      });
+    }
+
+    // Trade Button
+    const btnTrade = document.getElementById('tv-trade-btn');
+    if (btnTrade) {
+      btnTrade.addEventListener('click', () => {
+        showToast('📊 Paper Trading: Live market simulated execution ready');
+      });
+    }
+
+    // Upgrade Button
+    const btnUpgrade = document.getElementById('tv-upgrade-btn');
+    if (btnUpgrade) {
+      btnUpgrade.addEventListener('click', () => {
+        showToast('⭐ BacktestPro Pro: All features unlocked!');
+      });
+    }
+
+    // Avatar Button
+    const btnAvatar = document.getElementById('tv-avatar-btn');
+    if (btnAvatar) {
+      btnAvatar.addEventListener('click', () => {
+        showToast('👤 Ilyaas Abdirahman • Pro Trader (11 notifications)');
+      });
+    }
+
+    // Compare Button
+    const btnCompare = document.getElementById('tv-compare-btn');
+    if (btnCompare) {
+      btnCompare.addEventListener('click', () => {
+        if (symbolMenu) {
+          symbolMenu.style.display = symbolMenu.style.display === 'block' ? 'none' : 'block';
+        }
+      });
+    }
+
+    // Quick Search Button
+    const btnQuickSearch = document.getElementById('tv-quicksearch-btn');
+    if (btnQuickSearch) {
+      btnQuickSearch.addEventListener('click', () => {
+        if (symbolMenu) {
+          symbolMenu.style.display = symbolMenu.style.display === 'block' ? 'none' : 'block';
+        }
+      });
+    }
+
+    // ── 12. TradingView Trendline & Ray Drawing Engine ──
+
+    function saveCurrentDrawings() {
+      try {
+        if (!currentSymbol) return;
+        localStorage.setItem('tv_drawings_' + currentSymbol, JSON.stringify(trendlines));
+      } catch (err) {
+        console.error('Error saving drawings:', err);
+      }
+    }
+
+    function loadSavedDrawings(symbol) {
+      try {
+        const key = 'tv_drawings_' + (symbol || currentSymbol || 'EURUSD');
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            trendlines = parsed;
+          }
+        } else {
+          trendlines = [];
+        }
+        deselectTrendline();
+        if (typeof renderDrawings === 'function') renderDrawings();
+      } catch (err) {
+        console.error('Error loading drawings:', err);
+      }
+    }
+
+    function recordAction(action) {
+      drawingActionHistory.push(action);
+      drawingRedoStack = [];
+    }
+
+    function getPointScreenCoords(pt) {
+      if (!pt) return null;
+      let x = null;
+      if (pt.time) {
+        x = chart.timeScale().timeToCoordinate(pt.time);
+      }
+      if (x === null && pt.logical !== undefined && pt.logical !== null) {
+        x = chart.timeScale().logicalToCoordinate(pt.logical);
+      }
+      if (x === null && pt.time && fullCandles.length > 0) {
+        const idx = fullCandles.findIndex(c => c.time >= pt.time);
+        if (idx !== -1) {
+          x = chart.timeScale().logicalToCoordinate(idx);
+        }
+      }
+      const y = candleSeries.priceToCoordinate(pt.price);
+      if (x === null || y === null || isNaN(x) || isNaN(y)) return null;
+      return { x, y };
+    }
+
+    function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+      let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+      t = Math.max(0, Math.min(1, t));
+      const projX = x1 + t * dx;
+      const projY = y1 + t * dy;
+      return Math.hypot(px - projX, py - projY);
+    }
+
+    function getRayExtendedCoords(c1, c2, width, height, extendRight = true, extendLeft = false) {
+      if (!c1 || !c2) return { start: c1, end: c2 };
+      const dx = c2.x - c1.x;
+      const dy = c2.y - c1.y;
+      let start = { x: c1.x, y: c1.y };
+      let end = { x: c2.x, y: c2.y };
+
+      if (dx === 0 && dy === 0) return { start, end };
+
+      if (Math.abs(dx) > 0.0001) {
+        const slope = dy / dx;
+        // Extend forward infinitely to the right
+        if (extendRight) {
+          const targetX = width + 200;
+          if (c2.x >= c1.x) {
+            start = { x: c1.x, y: c1.y };
+            end = { x: targetX, y: c1.y + slope * (targetX - c1.x) };
+          } else {
+            start = { x: c2.x, y: c2.y };
+            end = { x: targetX, y: c2.y + slope * (targetX - c2.x) };
+          }
+        }
+        // Optional backward extend left
+        if (extendLeft) {
+          const targetX = -200;
+          if (c2.x >= c1.x) {
+            start = { x: targetX, y: c1.y + slope * (targetX - c1.x) };
+          } else {
+            end = { x: targetX, y: c2.y + slope * (targetX - c2.x) };
+          }
+        }
+      } else {
+        // Vertical ray
+        if (extendRight) {
+          end = { x: c1.x, y: dy >= 0 ? (height + 200) : -200 };
+        }
+        if (extendLeft) {
+          start = { x: c1.x, y: dy >= 0 ? -200 : (height + 200) };
+        }
+      }
+      return { start, end };
+    }
+
+    function drawAnchorHandle(context, x, y, color) {
+      context.save();
+      context.beginPath();
+      context.arc(x, y, 5, 0, Math.PI * 2);
+      context.fillStyle = '#ffffff';
+      context.fill();
+      context.lineWidth = 1.8;
+      context.strokeStyle = color || '#2962ff';
+      context.stroke();
+      context.restore();
+    }
+
+    function renderDrawings() {
+      if (!drawingsCtx || !drawingsCanvas) return;
+      drawingsCtx.clearRect(0, 0, drawingsCanvas.width, drawingsCanvas.height);
+
+      trendlines.forEach(tl => {
+        if (tl.hidden) return;
+        const c1 = getPointScreenCoords(tl.p1);
+        const c2 = getPointScreenCoords(tl.p2);
+        if (!c1 || !c2) return;
+
+        const isRay = tl.type === 'ray' || !!tl.extendRight;
+        const coords = getRayExtendedCoords(c1, c2, drawingsCanvas.width, drawingsCanvas.height, isRay, !!tl.extendLeft);
+
+        drawingsCtx.beginPath();
+        drawingsCtx.strokeStyle = tl.color || '#2962ff';
+        drawingsCtx.lineWidth = tl.lineWidth || 2;
+        if (tl.lineStyle === 'dashed') {
+          drawingsCtx.setLineDash([6, 6]);
+        } else if (tl.lineStyle === 'dotted') {
+          drawingsCtx.setLineDash([2, 4]);
+        } else {
+          drawingsCtx.setLineDash([]);
+        }
+        drawingsCtx.moveTo(coords.start.x, coords.start.y);
+        drawingsCtx.lineTo(coords.end.x, coords.end.y);
+        drawingsCtx.stroke();
+        drawingsCtx.setLineDash([]);
+
+        // "when holding" & "when selected":
+        // Show hollow circular handles when actively held/dragged or when selected.
+        // Once deselected and released, handles are completely hidden!
+        const isBeingHeld = activeDrag && activeDrag.line && activeDrag.line.id === tl.id;
+        const isSelected = selectedTrendline && selectedTrendline.id === tl.id;
+        if ((isBeingHeld || isSelected) && !tl.hideAnchors) {
+          drawAnchorHandle(drawingsCtx, c1.x, c1.y, tl.color);
+          drawAnchorHandle(drawingsCtx, c2.x, c2.y, tl.color);
+        }
+      });
+
+      if (selectedTrendline && !activeDrag) {
+        updateTrendlineToolbarPosition();
+      }
+    }
+
+    function renderTrendlinePreview() {
+      if (!trendlinePending || !trendlinePending.p1 || !trendlinePending.p2) return;
+      ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+
+      const c1 = getPointScreenCoords(trendlinePending.p1);
+      if (!c1) return;
+      const c2 = { x: trendlinePending.p2.x, y: trendlinePending.p2.y };
+
+      const isRay = activeDrawingTool === 'ray' || !!trendlinePending.isRay;
+      const coords = getRayExtendedCoords(c1, c2, measureCanvas.width, measureCanvas.height, isRay, false);
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#2962ff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      ctx.moveTo(coords.start.x, coords.start.y);
+      ctx.lineTo(coords.end.x, coords.end.y);
+      ctx.stroke();
+
+      // Hollow circular handles at Point A and Point B ("when holding")
+      drawAnchorHandle(ctx, c1.x, c1.y, '#2962ff');
+      drawAnchorHandle(ctx, c2.x, c2.y, '#2962ff');
+    }
+
+    function finishTrendlinePlacement(price, logical, time) {
+      if (!trendlinePending || !trendlinePending.p1) return;
+
+      const p1 = trendlinePending.p1;
+      const p2 = { price, logical, time };
+      const isRay = activeDrawingTool === 'ray' || !!trendlinePending.isRay;
+
+      const newLine = {
+        id: (isRay ? 'ray_' : 'tl_') + Date.now(),
+        type: isRay ? 'ray' : 'trendline',
+        extendRight: isRay,
+        extendLeft: false,
+        locked: false,
+        hidden: false,
+        hideAnchors: false,
+        p1: { price: p1.price, logical: p1.logical, time: p1.time },
+        p2: p2,
+        color: '#2962ff',
+        lineWidth: 2,
+        lineStyle: 'solid',
+      };
+      trendlines.push(newLine);
+      recordAction({ type: 'add_trendline', item: newLine });
+      saveCurrentDrawings();
+
+      trendlinePending = null;
+      ctx.clearRect(0, 0, measureCanvas.width, measureCanvas.height);
+      setDrawingTool(null);
+      selectTrendline(newLine);
+      renderDrawings();
+      showToast(isRay ? '➡️ Ray placed (extends infinitely right)' : '📈 Trendline placed');
+    }
+
+    function duplicateDrawing(tl) {
+      if (!tl) return;
+      const priceOffset = (tl.p2.price - tl.p1.price) * 0.05 || (tl.p1.price * 0.002);
+      const isRay = tl.type === 'ray' || !!tl.extendRight;
+      const cloned = {
+        ...JSON.parse(JSON.stringify(tl)),
+        id: (isRay ? 'ray_' : 'tl_') + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        p1: { ...tl.p1, price: tl.p1.price - priceOffset, logical: (tl.p1.logical || 0) + 2 },
+        p2: { ...tl.p2, price: tl.p2.price - priceOffset, logical: (tl.p2.logical || 0) + 2 },
+        locked: false,
+      };
+      trendlines.push(cloned);
+      recordAction({ type: 'add_trendline', item: cloned });
+      saveCurrentDrawings();
+      selectTrendline(cloned);
+      renderDrawings();
+      showToast('📋 Drawing duplicated');
+    }
+
+    function setDrawingTool(tool) {
+      if (tool) {
+        activateLineTool(tool);
+      } else {
+        if (window.drawingEngine?.controller) {
+          window.drawingEngine.controller.setTool(null);
+        }
+      }
+    }
+
+    function selectTrendline(tl) {
+      selectedTrendline = tl;
+      updateTrendlineToolbarPosition();
+      updateTrendlineToolbarUI();
+      renderDrawings();
+    }
+
+    function deselectTrendline() {
+      selectedTrendline = null;
+      const toolbar = document.getElementById('trendline-toolbar');
+      if (toolbar) toolbar.style.display = 'none';
+      renderDrawings();
+    }
+
+    function deleteSelectedTrendline() {
+      if (!selectedTrendline) return;
+      const idx = trendlines.findIndex(t => t.id === selectedTrendline.id);
+      if (idx !== -1) {
+        const removed = trendlines.splice(idx, 1)[0];
+        recordAction({ type: 'delete_trendline', item: removed });
+        saveCurrentDrawings();
+        showToast(removed.type === 'ray' ? '🗑️ Ray removed' : '🗑️ Trendline removed');
+      }
+      deselectTrendline();
+    }
+
+    function updateTrendlineToolbarPosition() {
+      const toolbar = document.getElementById('trendline-toolbar');
+      if (!toolbar || !selectedTrendline) {
+        if (toolbar) toolbar.style.display = 'none';
+        return;
+      }
+      const c1 = getPointScreenCoords(selectedTrendline.p1);
+      const c2 = getPointScreenCoords(selectedTrendline.p2);
+      if (!c1 || !c2) {
+        toolbar.style.display = 'none';
+        return;
+      }
+      const midX = (c1.x + c2.x) / 2;
+      const midY = (c1.y + c2.y) / 2;
+      toolbar.style.display = 'flex';
+      const tbW = toolbar.offsetWidth || 260;
+      const left = Math.max(10, Math.min(chartWrapper.clientWidth - tbW - 10, midX - tbW / 2));
+      const top = Math.max(10, midY - 48);
+      toolbar.style.left = `${left}px`;
+      toolbar.style.top = `${top}px`;
+    }
+
+    function updateTrendlineToolbarUI() {
+      if (!selectedTrendline) return;
+      if (tlToolbarTitle) {
+        tlToolbarTitle.textContent = (selectedTrendline.type === 'ray' || selectedTrendline.extendRight) ? 'Ray' : 'Line';
+      }
+      document.querySelectorAll('#trendline-toolbar .tv-color-dot').forEach(dot => {
+        dot.classList.toggle('active', dot.getAttribute('data-color') === selectedTrendline.color);
+      });
+      if (tlWidthBtn) tlWidthBtn.textContent = `${selectedTrendline.lineWidth || 2}px`;
+      if (tlStyleBtn) {
+        const style = selectedTrendline.lineStyle || 'solid';
+        tlStyleBtn.textContent = style === 'dotted' ? '┈' : (style === 'dashed' ? '┅' : '━');
+        tlStyleBtn.title = `Style: ${style.toUpperCase()} (Click to toggle)`;
+      }
+      if (tlRayBtn) {
+        const isRay = selectedTrendline.type === 'ray' || !!selectedTrendline.extendRight;
+        tlRayBtn.classList.toggle('active', isRay);
+        tlRayBtn.style.color = isRay ? '#2962ff' : '';
+        tlRayBtn.title = isRay ? 'Ray Mode: ON (Click to make segment)' : 'Ray Mode: OFF (Click to extend right)';
+      }
+      if (tlLockBtn) {
+        const isLocked = !!selectedTrendline.locked;
+        tlLockBtn.textContent = isLocked ? '🔒' : '🔓';
+        tlLockBtn.title = isLocked ? 'Drawing is Locked (Click to unlock)' : 'Drawing is Unlocked (Click to lock)';
+      }
+    }
+
+    document.querySelectorAll('#trendline-toolbar .tv-color-dot').forEach(dot => {
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!selectedTrendline) return;
+        selectedTrendline.color = dot.getAttribute('data-color');
+        saveCurrentDrawings();
+        updateTrendlineToolbarUI();
+        renderDrawings();
+      });
+    });
+
+    if (tlWidthBtn) {
+      tlWidthBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!selectedTrendline) return;
+        const current = selectedTrendline.lineWidth || 2;
+        selectedTrendline.lineWidth = current >= 4 ? 1 : current + 1;
+        saveCurrentDrawings();
+        updateTrendlineToolbarUI();
+        renderDrawings();
+      });
+    }
+
+    if (tlStyleBtn) {
+      tlStyleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!selectedTrendline) return;
+        const cur = selectedTrendline.lineStyle || 'solid';
+        selectedTrendline.lineStyle = cur === 'solid' ? 'dashed' : (cur === 'dashed' ? 'dotted' : 'solid');
+        saveCurrentDrawings();
+        updateTrendlineToolbarUI();
+        renderDrawings();
+      });
+    }
+
+    if (tlRayBtn) {
+      tlRayBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!selectedTrendline) return;
+        selectedTrendline.extendRight = !selectedTrendline.extendRight;
+        selectedTrendline.type = selectedTrendline.extendRight ? 'ray' : 'trendline';
+        saveCurrentDrawings();
+        updateTrendlineToolbarUI();
+        renderDrawings();
+        showToast(selectedTrendline.extendRight ? '➡️ Extended Right (Ray)' : '📏 Ray disabled (Trendline segment)');
+      });
+    }
+
+    if (tlLockBtn) {
+      tlLockBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!selectedTrendline) return;
+        selectedTrendline.locked = !selectedTrendline.locked;
+        saveCurrentDrawings();
+        updateTrendlineToolbarUI();
+        renderDrawings();
+        showToast(selectedTrendline.locked ? '🔒 Drawing locked' : '🔓 Drawing unlocked');
+      });
+    }
+
+    if (tlCloneBtn) {
+      tlCloneBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!selectedTrendline) return;
+        duplicateDrawing(selectedTrendline);
+      });
+    }
+
+    if (tlDeleteBtn) {
+      tlDeleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteSelectedTrendline();
+      });
+    }
+
+    // ── Unified Toolbar UI State & Button Controllers ──
+    let selectedLineTool = 'trendline';
+    let selectedGeometricShape = 'rectangle';
+
+    function updateLineButtonUI(toolName) {
+      if (!toolTrendlineBtn) return;
+      selectedLineTool = toolName;
+      document.querySelectorAll('#tv-lines-flyout .tv-flyout-item').forEach(item => {
+        const t = item.getAttribute('data-line-tool');
+        const isMatch = (t === 'trendline' && toolName === 'trendline') ||
+                        (t === 'ray' && toolName === 'ray') ||
+                        (t === 'info-line' && toolName === 'infoLine') ||
+                        (t === 'extended-line' && toolName === 'extendedLine') ||
+                        (t === 'trend-angle' && toolName === 'trendAngle') ||
+                        (t === 'horizontal-line' && toolName === 'horizontalLine') ||
+                        (t === 'horizontal-ray' && toolName === 'horizontalRay') ||
+                        (t === 'vertical-line' && toolName === 'verticalLine') ||
+                        (t === 'crossline' && toolName === 'crossline');
+        item.classList.toggle('active', isMatch);
+      });
+
+      const svgIcon = toolTrendlineBtn.querySelector('svg');
+      if (svgIcon) {
+        if (toolName === 'ray') {
+          svgIcon.innerHTML = '<line x1="4" y1="16" x2="18" y2="3" stroke="currentColor" stroke-width="1.7"/><circle cx="4" cy="16" r="2" fill="currentColor"/><circle cx="12" cy="8.5" r="2" fill="currentColor"/>';
+          toolTrendlineBtn.title = 'Ray (Alt + R)';
+        } else if (toolName === 'infoLine') {
+          svgIcon.innerHTML = '<line x1="4" y1="16" x2="16" y2="4" stroke="currentColor" stroke-width="1.7"/><circle cx="4" cy="16" r="1.8" fill="currentColor"/><circle cx="16" cy="4" r="1.8" fill="currentColor"/><rect x="8" y="11" width="7" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/>';
+          toolTrendlineBtn.title = 'Info line';
+        } else if (toolName === 'extendedLine') {
+          svgIcon.innerHTML = '<line x1="2" y1="18" x2="18" y2="2" stroke="currentColor" stroke-width="1.7"/><circle cx="6" cy="14" r="2" fill="currentColor"/><circle cx="14" cy="6" r="2" fill="currentColor"/>';
+          toolTrendlineBtn.title = 'Extended line';
+        } else if (toolName === 'trendAngle') {
+          svgIcon.innerHTML = '<line x1="3" y1="16" x2="17" y2="16" stroke="currentColor" stroke-width="1.7"/><line x1="3" y1="16" x2="15" y2="4" stroke="currentColor" stroke-width="1.7"/><circle cx="3" cy="16" r="1.8" fill="currentColor"/><circle cx="15" cy="4" r="1.8" fill="currentColor"/><path d="M7 16 A5 5 0 0 0 8.5 12" stroke="currentColor" stroke-width="1.2" fill="none"/>';
+          toolTrendlineBtn.title = 'Trend angle';
+        } else if (toolName === 'horizontalLine') {
+          svgIcon.innerHTML = '<line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" stroke-width="1.7"/><circle cx="6" cy="10" r="2" fill="currentColor"/>';
+          toolTrendlineBtn.title = 'Horizontal line (Alt + H)';
+        } else if (toolName === 'horizontalRay') {
+          svgIcon.innerHTML = '<line x1="4" y1="10" x2="18" y2="10" stroke="currentColor" stroke-width="1.7"/><circle cx="4" cy="10" r="2" fill="currentColor"/>';
+          toolTrendlineBtn.title = 'Horizontal ray (Alt + J)';
+        } else if (toolName === 'verticalLine') {
+          svgIcon.innerHTML = '<line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="1.7"/><circle cx="10" cy="10" r="2" fill="currentColor"/>';
+          toolTrendlineBtn.title = 'Vertical line (Alt + V)';
+        } else if (toolName === 'crossline') {
+          svgIcon.innerHTML = '<line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="1.7"/><line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" stroke-width="1.7"/><circle cx="10" cy="10" r="2" fill="currentColor"/>';
+          toolTrendlineBtn.title = 'Crossline (Alt + C)';
+        } else {
+          svgIcon.innerHTML = '<line x1="4" y1="16" x2="16" y2="4" stroke="currentColor" stroke-width="1.7"/><circle cx="4" cy="16" r="2.2" fill="currentColor"/><circle cx="16" cy="4" r="2.2" fill="currentColor"/>';
+          toolTrendlineBtn.title = 'Trendline (Alt + T)';
+        }
+      }
+    }
+
+    function toggleLinesFlyout() {
+      if (!linesFlyoutMenu) return;
+      const isOpen = linesFlyoutMenu.style.display === 'block';
+      closeAllTvMenus();
+      if (!isOpen) linesFlyoutMenu.style.display = 'block';
+    }
+
+    function activateLineTool(toolName) {
+      closeAllTvMenus();
+      if (isMeasureActive) {
+        isMeasureActive = false;
+        btnMeasure.classList.remove('active');
+        clearMeasure();
+      }
+      if (isCutMode) setCutMode(false);
+      if (placingMode) setPlacingMode(null);
+
+      updateLineButtonUI(toolName);
+      if (window.drawingEngine?.controller) {
+        const isAlready = (window.drawingEngine.controller.activeTool === toolName);
+        window.drawingEngine.controller.setTool(isAlready ? null : toolName);
+      } else {
+        selectedLineTool = toolName;
+      }
+    }
+
+    function updateGeometricButtonUI(toolName) {
+      const toolRectBtn = document.getElementById('tool-rectangle');
+      if (!toolRectBtn) return;
+      selectedGeometricShape = toolName;
+      document.querySelectorAll('#tv-shapes-flyout .tv-flyout-item').forEach(item => {
+        const t = item.getAttribute('data-shape-tool');
+        const isMatch = (t === 'brush' && toolName === 'brush') ||
+                        (t === 'rectangle' && toolName === 'rectangle') ||
+                        (t === 'rotated-rectangle' && toolName === 'rotatedRectangle') ||
+                        (t === 'ellipse' && toolName === 'ellipse') ||
+                        (t === 'path' && toolName === 'path');
+        item.classList.toggle('active', isMatch);
+      });
+
+      const svgIcon = toolRectBtn.querySelector('svg');
+      if (svgIcon) {
+        if (toolName === 'brush') {
+          svgIcon.innerHTML = '<path d="M14.5 3.5a2.12 2.12 0 0 1 3 3L11 13l-4 1 1-4 6.5-6.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4 17c-1 0-2 .5-2 1.5S3 20 4.5 20s2.5-.5 2.5-1.5S6 17 4 17z" fill="currentColor"/>';
+          toolRectBtn.title = 'Brush Tool (Alt + B)';
+        } else if (toolName === 'path') {
+          svgIcon.innerHTML = '<polyline points="3,15 8,7 13,12 17,4" fill="none" stroke="currentColor" stroke-width="1.7"/><polyline points="14,4 17,4 17,7" stroke-width="1.7"/><circle cx="3" cy="15" r="1.8" fill="currentColor"/><circle cx="8" cy="7" r="1.8" fill="currentColor"/><circle cx="13" cy="12" r="1.8" fill="currentColor"/>';
+          toolRectBtn.title = 'Path Tool (Alt + P)';
+        } else if (toolName === 'ellipse') {
+          svgIcon.innerHTML = '<ellipse cx="10" cy="10" rx="7.5" ry="5" fill="none" stroke="currentColor" stroke-width="1.7"/>';
+          toolRectBtn.title = 'Ellipse Tool (Shift + E)';
+        } else if (toolName === 'rotatedRectangle') {
+          svgIcon.innerHTML = '<polygon points="4,15 15,11 13,5 2,9" fill="none" stroke="currentColor" stroke-width="1.7"/>';
+          toolRectBtn.title = 'Rotated Rectangle Tool';
+        } else {
+          svgIcon.innerHTML = '<rect x="3" y="5" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"/>';
+          toolRectBtn.title = 'Rectangle Tool (Shift + R)';
+        }
+      }
+    }
+
+    function toggleShapesFlyout() {
+      const shapesFlyout = document.getElementById('tv-shapes-flyout');
+      if (!shapesFlyout) return;
+      const isOpen = shapesFlyout.style.display === 'block';
+      closeAllTvMenus();
+      if (!isOpen) shapesFlyout.style.display = 'block';
+    }
+
+    function activateGeometricTool(toolName) {
+      closeAllTvMenus();
+      if (isMeasureActive) {
+        isMeasureActive = false;
+        btnMeasure.classList.remove('active');
+        clearMeasure();
+      }
+      if (isCutMode) setCutMode(false);
+      if (placingMode) setPlacingMode(null);
+
+      updateGeometricButtonUI(toolName);
+      if (window.drawingEngine?.controller) {
+        const isAlready = (window.drawingEngine.controller.activeTool === toolName);
+        window.drawingEngine.controller.setTool(isAlready ? null : toolName);
+      } else {
+        selectedGeometricShape = toolName;
+      }
+    }
+
+    function toggleRangeFlyout() {
+      const rangeFlyout = document.getElementById('tv-range-flyout');
+      if (!rangeFlyout) return;
+      const isOpen = rangeFlyout.style.display === 'block';
+      closeAllTvMenus();
+      if (!isOpen) rangeFlyout.style.display = 'block';
+    }
+
+    function activateRangeTool(toolName = 'priceRange') {
+      closeAllTvMenus();
+      if (isMeasureActive) {
+        isMeasureActive = false;
+        btnMeasure.classList.remove('active');
+        clearMeasure();
+      }
+      if (isCutMode) setCutMode(false);
+      if (placingMode) setPlacingMode(null);
+
+      if (window.drawingEngine?.controller) {
+        const isAlready = (window.drawingEngine.controller.activeTool === toolName);
+        window.drawingEngine.controller.setTool(isAlready ? null : toolName);
+      }
+    }
+
+    // Wiring toolCursorBtn
+    if (toolCursorBtn) {
+      toolCursorBtn.addEventListener('click', () => {
+        closeAllTvMenus();
+        if (window.drawingEngine?.controller) {
+          window.drawingEngine.controller.setTool(null);
+        }
+        toolCursorBtn.classList.add('active');
+        if (toolTrendlineBtn) toolTrendlineBtn.classList.remove('active');
+        const rBtn = document.getElementById('tool-rectangle');
+        if (rBtn) rBtn.classList.remove('active');
+        const prBtn = document.getElementById('tool-price-range');
+        if (prBtn) prBtn.classList.remove('active');
+        actionBanner.style.display = 'none';
+        showToast('↖️ Cursor mode');
+      });
+    }
+
+    // Wiring toolTrendlineBtn & Arrow
+    if (toolTrendlineBtn) {
+      toolTrendlineBtn.addEventListener('click', (e) => {
+        const btnRect = toolTrendlineBtn.getBoundingClientRect();
+        const isCornerArrow = e.target.closest('#tool-lines-arrow') ||
+          (e.clientX >= btnRect.right - 18 && e.clientY >= btnRect.bottom - 18);
+
+        if (isCornerArrow) {
+          e.stopPropagation();
+          toggleLinesFlyout();
+          return;
+        }
+        activateLineTool(selectedLineTool);
+      });
+
+      toolTrendlineBtn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleLinesFlyout();
+      });
+    }
+
+    if (toolLinesArrow) {
+      toolLinesArrow.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleLinesFlyout();
+      });
+    }
+
+    // Wiring Lines Flyout Items
+    document.querySelectorAll('#tv-lines-flyout .tv-flyout-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const toolName = item.getAttribute('data-line-tool');
+        if (!toolName) return;
+        if (toolName === 'trendline') activateLineTool('trendline');
+        else if (toolName === 'ray') activateLineTool('ray');
+        else if (toolName === 'info-line') activateLineTool('infoLine');
+        else if (toolName === 'extended-line') activateLineTool('extendedLine');
+        else if (toolName === 'trend-angle') activateLineTool('trendAngle');
+        else if (toolName === 'horizontal-line') activateLineTool('horizontalLine');
+        else if (toolName === 'horizontal-ray') activateLineTool('horizontalRay');
+        else if (toolName === 'vertical-line') activateLineTool('verticalLine');
+        else if (toolName === 'crossline') activateLineTool('crossline');
+        else if (toolName === 'brush') activateGeometricTool('brush');
+        else if (toolName === 'path') activateGeometricTool('path');
+        else if (toolName === 'rectangle') activateGeometricTool('rectangle');
+        else if (toolName === 'rotated-rectangle') activateGeometricTool('rotatedRectangle');
+        else if (toolName === 'ellipse') activateGeometricTool('ellipse');
+      });
+    });
+
+    // Wiring Geometric Shapes Button & Arrow
+    const toolRectBtn = document.getElementById('tool-rectangle');
+    const toolShapesArrow = document.getElementById('tool-shapes-arrow');
+    if (toolRectBtn) {
+      toolRectBtn.addEventListener('click', (e) => {
+        const btnRect = toolRectBtn.getBoundingClientRect();
+        const isCornerArrow = e.target.closest('#tool-shapes-arrow') ||
+          (e.clientX >= btnRect.right - 18 && e.clientY >= btnRect.bottom - 18);
+
+        if (isCornerArrow) {
+          e.stopPropagation();
+          toggleShapesFlyout();
+          return;
+        }
+        activateGeometricTool(selectedGeometricShape);
+      });
+
+      toolRectBtn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleShapesFlyout();
+      });
+    }
+
+    if (toolShapesArrow) {
+      toolShapesArrow.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleShapesFlyout();
+      });
+    }
+
+    // Wiring Shapes Flyout Items
+    document.querySelectorAll('#tv-shapes-flyout .tv-flyout-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const shapeTool = item.getAttribute('data-shape-tool');
+        if (shapeTool === 'brush') activateGeometricTool('brush');
+        else if (shapeTool === 'path') activateGeometricTool('path');
+        else if (shapeTool === 'ellipse') activateGeometricTool('ellipse');
+        else if (shapeTool === 'rotated-rectangle') activateGeometricTool('rotatedRectangle');
+        else activateGeometricTool('rectangle');
+      });
+    });
+
+    // Wiring Price Range Button & Arrow
+    const toolPriceRangeBtn = document.getElementById('tool-price-range');
+    const toolRangeArrow = document.getElementById('tool-range-arrow');
+    if (toolPriceRangeBtn) {
+      toolPriceRangeBtn.addEventListener('click', (e) => {
+        const btnRect = toolPriceRangeBtn.getBoundingClientRect();
+        const isCornerArrow = e.target.closest('#tool-range-arrow') ||
+          (e.clientX >= btnRect.right - 18 && e.clientY >= btnRect.bottom - 18);
+
+        if (isCornerArrow) {
+          e.stopPropagation();
+          toggleRangeFlyout();
+          return;
+        }
+        activateRangeTool('priceRange');
+      });
+
+      toolPriceRangeBtn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleRangeFlyout();
+      });
+    }
+
+    if (toolRangeArrow) {
+      toolRangeArrow.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleRangeFlyout();
+      });
+    }
+
+    // Wiring Range Flyout Items
+    document.querySelectorAll('#tv-range-flyout .tv-flyout-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const rangeTool = item.getAttribute('data-range-tool');
+        if (rangeTool === 'price-range') {
+          activateRangeTool('priceRange');
+        } else {
+          showToast(`ℹ️ ${item.querySelector('.tv-flyout-label')?.textContent || 'Range'} shares RangeMeasureBase`);
+        }
+      });
+    });
+
+    const btnPriceRange = document.getElementById('btn-price-range');
+    if (btnPriceRange) {
+      btnPriceRange.addEventListener('click', () => {
+        activateRangeTool('priceRange');
+      });
+    }
+
+    // Other Left Tools
+    const toolLeftMeasure = document.getElementById('tool-left-measure');
+    if (toolLeftMeasure) toolLeftMeasure.addEventListener('click', () => btnMeasure.click());
+    const toolLeftSR = document.getElementById('tool-left-sr');
+    if (toolLeftSR) toolLeftSR.addEventListener('click', () => btnAutoSR.click());
+    const toolLeftClean = document.getElementById('tool-left-clean');
+    if (toolLeftClean) toolLeftClean.addEventListener('click', () => cleanChartOnly());
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAllTvMenus();
+        closeContextMenu();
+        if (placingMode) setPlacingMode(null);
+        if (isCutMode) setCutMode(false);
+        clearMeasure();
+        if (isMeasureActive) btnMeasure.click();
+        if (window.drawingEngine?.controller) {
+          window.drawingEngine.controller.cancelCreation();
+          window.drawingEngine.controller.setTool(null);
+        }
+      } else if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+        e.preventDefault();
+        toggleDarkMode(true);
+      } else if (e.altKey && (e.key === 't' || e.key === 'T')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateLineTool('trendline');
+      } else if (e.altKey && (e.key === 'r' || e.key === 'R')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateLineTool('ray');
+      } else if (e.altKey && (e.key === 'h' || e.key === 'H')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateLineTool('horizontalLine');
+      } else if (e.altKey && (e.key === 'j' || e.key === 'J')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateLineTool('horizontalRay');
+      } else if (e.altKey && (e.key === 'v' || e.key === 'V')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateLineTool('verticalLine');
+      } else if (e.altKey && (e.key === 'c' || e.key === 'C')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        if (window.drawingEngine?.controller) {
+          window.drawingEngine.controller.placeCrosslineAtCursor();
+        } else {
+          activateLineTool('crossline');
+        }
+      } else if (e.altKey && (e.key === 'b' || e.key === 'B')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateGeometricTool('brush');
+      } else if (e.altKey && (e.key === 'p' || e.key === 'P')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateGeometricTool('path');
+      } else if (e.shiftKey && (e.key === 'r' || e.key === 'R')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateGeometricTool('rectangle');
+      } else if (e.shiftKey && (e.key === 'e' || e.key === 'E')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateGeometricTool('ellipse');
+      } else if (e.shiftKey && (e.key === 'p' || e.key === 'P')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        activateRangeTool('priceRange');
+      } else if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        if (btnUndo) btnUndo.click();
+      } else if (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        if (btnRedo) btnRedo.click();
+      } else if (e.key === ' ' && isReplaying) {
+        e.preventDefault();
+        togglePlayReplay();
+      } else if (e.key === 'ArrowRight' && isReplaying) {
+        e.preventDefault();
+        pauseReplay();
+        stepForward();
+      } else if (e.key === 'ArrowLeft' && isReplaying) {
+        e.preventDefault();
+        pauseReplay();
+        stepBackward();
+      }
+    });
+
+    // ── Application Launch ──
+    loadSymbolData('EURUSD');
+    updateThemeUI();
+    handleLayoutResize();
+    requestAnimationFrame(handleLayoutResize);
+    setTimeout(handleLayoutResize, 50);
+    setTimeout(handleLayoutResize, 150);
+    setTimeout(handleLayoutResize, 350);
+
+    // ── TradingView Unified Drawing Engine Integration ──
+    if (window.location.protocol === 'file:') {
+      console.warn('Trading Chart running on file:// protocol. ES modules require an HTTP server.');
+      setTimeout(() => {
+        showToast('⚠️ Drawing tools need a local server: run "node server.js" & open http://localhost:3000');
+      }, 800);
+    }
+
+    import('./drawings/index.js').then((drawingsModule) => {
+      window.drawingEngine = drawingsModule.initDrawingEngine({
+        chart,
+        candleSeries,
+        chartWrapper,
+        showToast,
+        currentSymbol,
+        currentTimeframe: document.getElementById('tv-timeframe-text')?.textContent || 'D',
+      });
+
+      const controller = window.drawingEngine.controller;
+
+      // Synchronize controller tool changes with navbar/toolbar UI buttons
+      controller.onToolChange = (tool) => {
+        const prBtn = document.getElementById('tool-price-range');
+        const rBtn = document.getElementById('tool-rectangle');
+
+        if (!tool) {
+          if (toolCursorBtn) toolCursorBtn.classList.add('active');
+          if (toolTrendlineBtn) toolTrendlineBtn.classList.remove('active');
+          if (rBtn) rBtn.classList.remove('active');
+          if (prBtn) prBtn.classList.remove('active');
+          actionBanner.style.display = 'none';
+          return;
+        }
+
+        if (toolCursorBtn) toolCursorBtn.classList.remove('active');
+
+        const lineTools = ['trendline', 'ray', 'infoLine', 'extendedLine', 'trendAngle', 'horizontalLine', 'horizontalRay', 'verticalLine', 'crossline'];
+        const shapeTools = ['rectangle', 'rotatedRectangle', 'ellipse', 'brush', 'path'];
+
+        if (lineTools.includes(tool)) {
+          if (toolTrendlineBtn) toolTrendlineBtn.classList.add('active');
+          if (rBtn) rBtn.classList.remove('active');
+          if (prBtn) prBtn.classList.remove('active');
+          updateLineButtonUI(tool);
+        } else if (shapeTools.includes(tool)) {
+          if (rBtn) rBtn.classList.add('active');
+          if (toolTrendlineBtn) toolTrendlineBtn.classList.remove('active');
+          if (prBtn) prBtn.classList.remove('active');
+          updateGeometricButtonUI(tool);
+        } else if (tool === 'priceRange') {
+          if (prBtn) prBtn.classList.add('active');
+          if (toolTrendlineBtn) toolTrendlineBtn.classList.remove('active');
+          if (rBtn) rBtn.classList.remove('active');
+        }
+      };
+
+      // If user selected a tool before module finished loading, activate it now
+      if (selectedLineTool && toolTrendlineBtn?.classList.contains('active')) {
+        controller.setTool(selectedLineTool);
+      } else if (selectedGeometricShape && toolRectBtn?.classList.contains('active')) {
+        controller.setTool(selectedGeometricShape);
+      }
+    }).catch((err) => {
+      console.error('Failed to initialize Drawing Engine:', err);
+      const isFile = window.location.protocol === 'file:';
+      const msg = isFile 
+        ? '⚠️ Drawing Engine blocked by file:// CORS. Run: node server.js & open http://localhost:3000'
+        : '⚠️ Failed to load Drawing Engine. Check console for details.';
+      showToast(msg);
+    });
+  </script>
+</body>
+</html>

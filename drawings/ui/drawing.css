@@ -1,0 +1,657 @@
+/* ── TradingView Rectangle Drawing Tool Styles ── */
+
+/* ── 1. Floating Toolbar ── */
+.tv-floating-drawing-toolbar {
+  position: absolute;
+  background: #1e222d;
+  border: 1px solid #363a45;
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 80;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif;
+  color: #d1d4dc;
+  font-size: 12px;
+  animation: tvFbarDrop 0.12s ease-out;
+}
+
+@keyframes tvFbarDrop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tv-fbar-drag-handle {
+  color: #787b86;
+  cursor: grab;
+  font-size: 13px;
+  letter-spacing: -2px;
+  padding: 0 3px;
+}
+
+.tv-fbar-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tv-fbar-btn {
+  background: #2a2e39;
+  color: #d1d4dc;
+  border: 1px solid #363a45;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.12s ease;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  line-height: 1;
+}
+
+.tv-fbar-btn:hover {
+  background: #363a45;
+  color: #ffffff;
+}
+
+.tv-fbar-btn.active {
+  background: rgba(41, 98, 255, 0.2);
+  color: #2962ff;
+  border-color: #2962ff;
+}
+
+.tv-fbar-danger {
+  color: #f23645;
+}
+
+.tv-fbar-danger:hover {
+  background: rgba(242, 54, 69, 0.2);
+}
+
+.tv-fbar-sep {
+  width: 1px;
+  height: 18px;
+  background: #363a45;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* Color & Fill Previews */
+.tv-fbar-color-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid #2962ff;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.tv-fbar-color-preview:hover {
+  transform: scale(1.15);
+}
+
+.tv-fbar-fill-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px dashed #787b86;
+  background: #2962ff;
+  opacity: 0.3;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.tv-fbar-fill-preview:hover {
+  transform: scale(1.15);
+}
+
+/* Dropdown popups for toolbar */
+.tv-fbar-color-dropdown,
+.tv-fbar-fill-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #1e222d;
+  border: 1px solid #363a45;
+  border-radius: 6px;
+  padding: 8px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+}
+
+.tv-fbar-color-dropdown.active,
+.tv-fbar-fill-dropdown.active {
+  display: block;
+}
+
+.tv-fbar-color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: transform 0.1s;
+}
+
+.tv-fbar-color-dot:hover {
+  transform: scale(1.3);
+}
+
+.tv-fbar-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 18px);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tv-fbar-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #9b9eb5;
+  white-space: nowrap;
+}
+
+.tv-fbar-slider-row input[type="range"] {
+  width: 75px;
+  accent-color: #2962ff;
+  cursor: pointer;
+}
+
+/* ── 2. Modal Settings Dialog ── */
+.tv-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  user-select: none;
+}
+
+.tv-dialog-box {
+  background: #1e222d;
+  border: 1px solid #363a45;
+  border-radius: 8px;
+  width: 520px;
+  max-width: 95vw;
+  max-height: 85vh;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  color: #d1d4dc;
+  font-family: -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif;
+  animation: tvModalPop 0.15s ease-out;
+  overflow: hidden;
+}
+
+.tv-alert-dialog {
+  width: 440px;
+}
+
+@keyframes tvModalPop {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.tv-dialog-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid #2a2e39;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tv-dialog-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.tv-dialog-close {
+  background: transparent;
+  border: none;
+  color: #787b86;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tv-dialog-close:hover {
+  color: #ffffff;
+  background: #2a2e39;
+}
+
+.tv-dialog-tabs {
+  display: flex;
+  background: #1a1e29;
+  border-bottom: 1px solid #2a2e39;
+  padding: 0 14px;
+  gap: 4px;
+}
+
+.tv-tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #787b86;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.tv-tab-btn:hover {
+  color: #d1d4dc;
+}
+
+.tv-tab-btn.active {
+  color: #2962ff;
+  border-bottom-color: #2962ff;
+}
+
+.tv-dialog-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  max-height: calc(85vh - 130px);
+}
+
+.tv-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tv-form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tv-form-row-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tv-form-subgroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tv-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9b9eb5;
+}
+
+.tv-form-divider {
+  height: 1px;
+  background: #2a2e39;
+  margin: 4px 0;
+}
+
+/* Inputs & Selects */
+.tv-checkbox-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #d1d4dc;
+}
+
+.tv-checkbox-wrap input[type="checkbox"] {
+  accent-color: #2962ff;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.tv-color-input {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #363a45;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tv-select-sm,
+.tv-select-md,
+.tv-select-full {
+  background: #2a2e39;
+  color: #d1d4dc;
+  border: 1px solid #363a45;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+
+.tv-select-md {
+  padding: 5px 10px;
+}
+
+.tv-select-full {
+  width: 100%;
+  padding: 7px 10px;
+}
+
+.tv-input-num {
+  background: #2a2e39;
+  color: #ffffff;
+  border: 1px solid #363a45;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  width: 120px;
+  outline: none;
+}
+
+.tv-textarea {
+  background: #2a2e39;
+  color: #ffffff;
+  border: 1px solid #363a45;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 13px;
+  width: 100%;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+}
+
+.tv-textarea:focus,
+.tv-input-num:focus {
+  border-color: #2962ff;
+}
+
+.tv-slider-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #9b9eb5;
+}
+
+.tv-slider-group input[type="range"] {
+  width: 85px;
+  accent-color: #2962ff;
+}
+
+.tv-btn-toggle-group {
+  display: inline-flex;
+  border: 1px solid #363a45;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tv-btn-toggle {
+  background: #2a2e39;
+  color: #787b86;
+  border: none;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tv-btn-toggle.active {
+  background: #2962ff;
+  color: #ffffff;
+}
+
+/* Coordinates box */
+.tv-coord-box {
+  background: #1a1e29;
+  border: 1px solid #2a2e39;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.tv-path-coord-row {
+  transition: background 0.15s ease;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.tv-path-coord-row:hover {
+  background: rgba(41, 98, 255, 0.08);
+}
+
+.tv-coord-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2962ff;
+  margin-bottom: 8px;
+}
+
+/* Visibility Grid */
+.tv-tf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.tv-tf-item {
+  background: #2a2e39;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #363a45;
+}
+
+/* Dialog Footer */
+.tv-dialog-footer {
+  padding: 12px 18px;
+  border-top: 1px solid #2a2e39;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a1e29;
+}
+
+.tv-dialog-template-wrap {
+  position: relative;
+}
+
+.tv-template-btn {
+  background: #2a2e39;
+  color: #d1d4dc;
+  border: 1px solid #363a45;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tv-template-btn:hover {
+  background: #363a45;
+  color: #ffffff;
+}
+
+.tv-template-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 6px;
+  background: #1e222d;
+  border: 1px solid #363a45;
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 190px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+}
+
+.tv-template-item {
+  padding: 7px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #d1d4dc;
+}
+
+.tv-template-item:hover {
+  background: #2a2e39;
+  color: #ffffff;
+}
+
+.tv-template-divider {
+  height: 1px;
+  background: #2a2e39;
+  margin: 4px 0;
+}
+
+.tv-dialog-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tv-dialog-cancel {
+  background: #2a2e39;
+  color: #d1d4dc;
+  border: 1px solid #363a45;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tv-dialog-cancel:hover {
+  background: #363a45;
+}
+
+.tv-dialog-ok {
+  background: #2962ff;
+  color: #ffffff;
+  border: 1px solid #2962ff;
+  border-radius: 4px;
+  padding: 6px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tv-dialog-ok:hover {
+  background: #1e53e5;
+}
+
+/* ── 3. Inline Text Editor Overlay ── */
+.tv-inline-drawing-editor {
+  position: absolute;
+  z-index: 90;
+  background: rgba(30, 34, 45, 0.95);
+  border: 1.5px solid #2962ff;
+  border-radius: 4px;
+  padding: 6px 8px;
+  outline: none;
+  resize: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  font-family: -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif;
+  line-height: 1.25;
+}
+
+/* ── 4. Light Theme Overrides ── */
+body.theme-light .tv-floating-drawing-toolbar {
+  background: #ffffff;
+  border-color: #e0e3eb;
+  color: #131722;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light .tv-fbar-btn {
+  background: #f0f3fa;
+  border-color: #e0e3eb;
+  color: #131722;
+}
+
+body.theme-light .tv-fbar-btn:hover {
+  background: #e0e3eb;
+}
+
+body.theme-light .tv-fbar-sep {
+  background: #e0e3eb;
+}
+
+body.theme-light .tv-dialog-box {
+  background: #ffffff;
+  border-color: #e0e3eb;
+  color: #131722;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+body.theme-light .tv-dialog-header {
+  border-bottom-color: #e0e3eb;
+}
+
+body.theme-light .tv-dialog-title {
+  color: #131722;
+}
+
+body.theme-light .tv-dialog-tabs {
+  background: #f0f3fa;
+  border-bottom-color: #e0e3eb;
+}
+
+body.theme-light .tv-form-label {
+  color: #787b86;
+}
+
+body.theme-light .tv-form-divider {
+  background: #e0e3eb;
+}
+
+body.theme-light .tv-checkbox-wrap {
+  color: #131722;
+}
+
+body.theme-light .tv-select-sm,
+body.theme-light .tv-select-md,
+body.theme-light .tv-select-full,
+body.theme-light .tv-input-num,
+body.theme-light .tv-textarea {
+  background: #f0f3fa;
+  border-color: #d1d4dc;
+  color: #131722;
+}
+
+body.theme-light .tv-coord-box {
+  background: #f0f3fa;
+  border-color: #e0e3eb;
+}
+
+body.theme-light .tv-dialog-footer {
+  background: #f0f3fa;
+  border-top-color: #e0e3eb;
+}
+
+body.theme-light .tv-template-btn,
+body.theme-light .tv-dialog-cancel {
+  background: #ffffff;
+  border-color: #d1d4dc;
+  color: #131722;
+}

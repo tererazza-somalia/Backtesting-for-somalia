@@ -1,0 +1,10 @@
+{
+  "name": "backtesting-chart",
+  "version": "1.0.0",
+  "description": "Trading chart with support/resistance and measure tools",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "python": "python server.py"
+  }
+}
